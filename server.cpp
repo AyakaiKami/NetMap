@@ -252,5 +252,5 @@ int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256])
 
 int getPropFromVM(char Prop[256],char Ident[256],char Rez[20][256])
 {
-  
+  return 0;
 }
