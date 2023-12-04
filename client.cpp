@@ -114,6 +114,12 @@ int main (int argc, char *argv[])
       {
         perror("[client]Error at read()\n");
       }
+
+      if(nr_lines<0)
+      {
+        printf("[client]Could not find VM or error on connection to hypervisor\n");
+        continue;
+      }
       for(int i=;i<nr_lines;i++)
       {
         bzero(&size_msg_recive,sizeof(int));///cleaning output vars

@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include <libvirt/libvirt.h>
 #include <arpa/inet.h>
-
+#include <sstream>
 /* portul folosit */
 #define PORT 2908
 
@@ -322,7 +322,7 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
   virInitialize();///deschidem libvirt
 
   ///Ne conectam la hypervisor
-  virConnectPtr vm=virConnectOpen("qemu:///system")
+  virConnectPtr con=virConnectOpen("qemu:///system")
 
   if(vm==nullptr)///conexiunea nu s-a realizat
   {
@@ -330,12 +330,36 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
     return -1;
   };
 
-  virDomainPtr domain;///domeniu dupa IP/ID
+  virDomainPtr vm;///domeniu dupa IP/ID
 
   if(Ident[0]>='0' && Ident[0]<='9')
   ///presupunem ca s-a dat IP-ul deoarece incepe cu o cifra
   {
-    
+    int domainID = std::stoi(Ident);
+    vm=virDomainLookupByID(con,domainID);
   }
+  else
+  {
+    in_addr addr;
+    if(inet_pton(AF_INET,Ident,&addr)==1)
+    {
+      vm=virDomainLookupByUUIDString(con,Ident);
+    }
+      else
+      {
+        virConnectClose(con);
+        printf("[server]Could not find VM\n");
+        return -1;
+      }
+  }
+
+  if(vm==nullptr)
+  {
+    virConnectClose(con);
+    printf("[server]Could not find VM\n");
+    return -1;
+  }
+
+  
   return lines;
 }
