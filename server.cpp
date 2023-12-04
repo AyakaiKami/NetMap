@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <libvirt/libvirt.h>
+#include <arpa/inet.h>
 
 /* portul folosit */
 #define PORT 2908
@@ -26,7 +27,7 @@ void raspunde(void *);
 
 int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256]);
 
-int getPropFromVM(char Prop[256],char Ident[256],char Rez[20][256]);
+int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256],int lines);
 
 
 int main ()
@@ -174,6 +175,72 @@ void raspunde(void *arg)
       printf("[server]Propriety is %s\n",propriety);
       printf("[server]Ident is %s\n",ident);
 
+      char rez[25][256];
+      int lines_rez=getPropFromVM(propriety,ident,rez);
+
+      if(rez==-1)
+      {
+        printf("[server]Could not get %s from VM %s\n");
+
+        bzero(&size_msg_send,sizeof(int));///cleaning send vars
+        bzero(msg_send,1024*sizeof(char));
+
+        strcpy(msg_send,"Could not obtain data");
+        size_msg_send=strlen(msg_send)+1;
+        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        if(write(tdL.cl,msg_send,size_msg_send)<0)
+        {
+          perror("[server]Error at write()\n");
+        }continue;
+      }else
+      {
+        printf("[server]Sending info about a VM\n");
+
+        bzero(&size_msg_send,sizeof(int));///cleaning send vars
+        bzero(msg_send,1024*sizeof(char));
+
+        strcpy(msg_send,"Info about a VM");
+        size_msg_send=strlen(msg_send)+1;
+        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        if(write(tdL.cl,msg_send,size_msg_send)<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+
+        printf("[server]Sending number of lines\n");
+        if(write(tdL.cl,&lines_rez,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        for(int i=0;i<lines_rez;i++)
+        {
+          bzero(&size_msg_send,sizeof(int));///cleaning send vars
+          bzero(msg_send,1024*sizeof(char));
+
+          strcpy(msg_send,rez[i]);
+          size_msg_send=strlen(msg_send)+1;
+          printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+        
+          if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+          {
+            perror("[server]Error at write()\n");
+          }
+          if(write(tdL.cl,msg_send,size_msg_send)<0)
+          {
+            perror("[server]Error at write()\n");
+          }
+
+        }
+      }
       
 
     }
@@ -238,19 +305,37 @@ int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256])
     if(word_nr==1)
     {
       strcpy(Prop_rez,token);
-    }
+    };
     if(word_nr==2)
     {
       strcpy(Ident_rez,token);
-    }
+    };
   }
   if(word_nr!=3)
     return -1;
   return 1;
 };
 
-
-int getPropFromVM(char Prop[256],char Ident[256],char Rez[20][256])
+int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
 {
-  return 0;
+  int lines=0;///nr de linii
+  virInitialize();///deschidem libvirt
+
+  ///Ne conectam la hypervisor
+  virConnectPtr vm=virConnectOpen("qemu:///system")
+
+  if(vm==nullptr)///conexiunea nu s-a realizat
+  {
+    printf("[server]Failed to open connection\n");
+    return -1;
+  };
+
+  virDomainPtr domain;///domeniu dupa IP/ID
+
+  if(Ident[0]>='0' && Ident[0]<='9')
+  ///presupunem ca s-a dat IP-ul deoarece incepe cu o cifra
+  {
+
+  }
+  return lines;
 }

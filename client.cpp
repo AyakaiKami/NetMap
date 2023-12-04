@@ -103,17 +103,50 @@ int main (int argc, char *argv[])
 
     printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    /*====================================================================*/
+    /*                      Info about a VM                               */
+    if(strcmp(msg_recive,"Info about a VM")==0)
+    {
+      printf("[client]Getting info about a VM :\n");
+
+      int nr_lines;
+      if(read(sd,&nr_lines,sizeof(int))<=0)
+      {
+        perror("[client]Error at read()\n");
+      }
+      for(int i=;i<nr_lines;i++)
+      {
+        bzero(&size_msg_recive,sizeof(int));///cleaning output vars
+        bzero(msg_recive,1024*sizeof(char));
+
+        if(read(sd,&size_msg_recive,sizeof(int))<=0)
+        {
+          perror("[client]Error at read()\n");
+        }
+        if(read(sd,msg_recive,size_msg_recive)<=0)
+        {
+         perror("[client]Error at read()\n");
+        }
+
+        printf("[client]%s\n",msg_recive);///printing msg
+      }
+    }
+    /*===================================================================*/
+    /*                      ERRORS/DATA NOT FOUND                        */
     if(strcmp(msg_recive,"Wrong syntax get")==0)
     {
       printf("[client]Wrong syntax get <prop> <ident>\n");
-    }
-    else
+    }else
+    if(strcmp(msg_recive,"Could not obtain data")==0)
+    {
+      printf("[client]Could not obtain data\n");
+    }else
     /*===================================================================*/
     /*                         CLOSE                                    */
     if(strcmp(msg_recive,"close")==0)
     {
       is_open=0;
-    }
+    }else
     /*===================================================================*/
     /*                         UNKNOWN COMMAND                           */
     if(strcmp(msg_recive,"Unknown")==0)
