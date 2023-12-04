@@ -335,7 +335,7 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
   if(Ident[0]>='0' && Ident[0]<='9')
   ///presupunem ca s-a dat IP-ul deoarece incepe cu o cifra
   {
-
+    
   }
   return lines;
 }
