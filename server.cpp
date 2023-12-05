@@ -11,6 +11,7 @@
 #include <libvirt/libvirt.h>
 #include <arpa/inet.h>
 #include <sstream>
+#include <ctime>
 /* portul folosit */
 #define PORT 2908
 
@@ -27,7 +28,7 @@ void raspunde(void *);
 
 int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256]);
 
-int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256],int lines);
+int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256]);
 
 
 int main ()
@@ -178,7 +179,7 @@ void raspunde(void *arg)
       char rez[25][256];
       int lines_rez=getPropFromVM(propriety,ident,rez);
 
-      if(rez==-1)
+      if(lines_rez==-1)
       {
         printf("[server]Could not get %s from VM %s\n");
 
@@ -322,7 +323,7 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
   virInitialize();///deschidem libvirt
 
   ///Ne conectam la hypervisor
-  virConnectPtr con=virConnectOpen("qemu:///system")
+  virConnectPtr con=virConnectOpen("qemu:///system");
 
   if(vm==nullptr)///conexiunea nu s-a realizat
   {
@@ -336,14 +337,14 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
   ///presupunem ca s-a dat IP-ul deoarece incepe cu o cifra
   {
     int domainID = std::stoi(Ident);
-    vm=virDomainLookupByID(con,domainID);
+    vm=virDomainLookupByID(con,domainID);///nume sugestiv
   }
   else
   {
     in_addr addr;
     if(inet_pton(AF_INET,Ident,&addr)==1)
     {
-      vm=virDomainLookupByUUIDString(con,Ident);
+      vm=virDomainLookupByUUIDString(con,Ident);///nume sufestiv
     }
       else
       {
@@ -360,6 +361,55 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
     return -1;
   }
 
-  
+  virDomainInfo vm_info;
+  if(virDomainGetInfo(vm,&vm_info)!=0)
+  {
+    virDomainFree(vm);
+    virConnectCloes(con);
+    return -1;
+  }
+
+///Get name
+  if(strcmp(Prop,"name")==0 || strcmp(Prop,"all")==0)
+  {
+    strcpy(Rez[lines],virDomainGetName(vm));
+    lines++;
+  }
+///Get number of CPU and CPU time
+  if(strcmp(Prop,"CPU")==0 || strcmp(Prop,"all")==0)
+  {
+    sprintf(Rez[lines],"CPU number : %d",vm_info.nrVirtCpu);
+    lines++;
+    sprintf(Rez[lines],"CPU time : %d ns",vm_info.nrVirtCpu);
+    lines++;
+  }
+
+///Get RAM
+
+  if(strcmp(Prop,"RAM")==0 || strcmp(Prop,"all")==0)
+  {
+    sprintf(Rez[lines],"Random Access Memory (RAM) :%d KB",vm_info.memory);
+    lines++;
+  }
+
+///Get State
+  if(strcmp(Prop,"state")==0 || strcmp(Prop,"all")==0)
+  {
+    int vm_state,reason;
+    if(virDomainGetState(vm,&vm_state,&reason,0)!=0)
+    {
+      virDomainFree(vm);
+      virConnectCloes(con);
+      return -1;
+    }
+    sprintf(Rez[lines],"State : %d ",vm_state);
+    lines++;
+
+  }
+
+
+  ////free VM domain and close connection to hypervisor
+  virDomainFree(vm);
+  virConnectCloes(con);
   return lines;
 }

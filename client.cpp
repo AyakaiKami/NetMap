@@ -120,7 +120,7 @@ int main (int argc, char *argv[])
         printf("[client]Could not find VM or error on connection to hypervisor\n");
         continue;
       }
-      for(int i=;i<nr_lines;i++)
+      for(int i=0;i<nr_lines;i++)
       {
         bzero(&size_msg_recive,sizeof(int));///cleaning output vars
         bzero(msg_recive,1024*sizeof(char));
