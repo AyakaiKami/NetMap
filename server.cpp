@@ -30,7 +30,7 @@ int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256]);
 
 int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256]);
 
-
+double getCPULoad(virDomain &vm);
 int main ()
 {
   struct sockaddr_in server;	// structura folosita de server
@@ -325,7 +325,7 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
   ///Ne conectam la hypervisor
   virConnectPtr con=virConnectOpen("qemu:///system");
 
-  if(vm==nullptr)///conexiunea nu s-a realizat
+  if(con==nullptr)///conexiunea nu s-a realizat
   {
     printf("[server]Failed to open connection\n");
     return -1;
@@ -365,7 +365,7 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
   if(virDomainGetInfo(vm,&vm_info)!=0)
   {
     virDomainFree(vm);
-    virConnectCloes(con);
+    virConnectClose(con);
     return -1;
   }
 
@@ -399,7 +399,7 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
     if(virDomainGetState(vm,&vm_state,&reason,0)!=0)
     {
       virDomainFree(vm);
-      virConnectCloes(con);
+      virConnectClose(con);
       return -1;
     }
     sprintf(Rez[lines],"State : %d ",vm_state);
@@ -410,6 +410,38 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
 
   ////free VM domain and close connection to hypervisor
   virDomainFree(vm);
-  virConnectCloes(con);
+  virConnectClose(con);
   return lines;
-}
+};
+
+double getCPULoad(virDomainPtr vm)
+{
+
+  std::time_t s_time=std::time(nullptr);
+  virVcpuInfo cpu_info;
+  if(virDomainGetVcpuPinInfo(vm,0,&cpu_info,nullptr,0)!=0)
+  {
+    ///nu s-au putut obtine datele
+    return -1.0;
+  }
+
+  unsigned long long s_cpu_time=cpu_info.cpuTime;
+
+  sleep(1);
+
+  if(virDomainGetVcpuPinInfo(vm,0,&cpu_info,nullptr,0)!=0)
+  {
+    ///nu s-au putut obtine datele
+    return -1.0;
+  }
+
+  std::time_t e_time=std::time(nullptr);
+  unsigned long long e_cpu_time=cpu_info.cpuTime;
+
+  unsigned long long dif_cpu_time=e_cpu_time-s_cpu_time;
+  std::time_t dif_time=e_time-s_time;
+
+  double load = (dif_cpu_time/ static_cast<double>(dif_time))*100.0;
+
+  return load;
+};
