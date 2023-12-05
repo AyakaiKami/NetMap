@@ -30,7 +30,8 @@ int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256]);
 
 int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256]);
 
-double getCPULoad(virDomain &vm);
+double getCPULoad(virDomainPtr vm);
+
 int main ()
 {
   struct sockaddr_in server;	// structura folosita de server
@@ -246,6 +247,10 @@ void raspunde(void *arg)
 
     }
     else
+    if(strncmp(msg_recive,"help")==0)
+    {
+      
+    }
     /*=========================================================================================*/
     /*                                    CLOSE                                                */
     if(strcmp(msg_recive,"close")==0)

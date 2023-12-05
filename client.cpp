@@ -103,6 +103,12 @@ int main (int argc, char *argv[])
 
     printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    if(strcmp(msg_recive,"help text")==0)
+    {
+      printf("[client]Info : \n");
+
+      
+    }else
     /*====================================================================*/
     /*                      Info about a VM                               */
     if(strcmp(msg_recive,"Info about a VM")==0)
