@@ -407,6 +407,18 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
 
   }
 
+  if(strcmp(Prop,"load")==0 || strcmp(Prop,"all")==0)
+  {
+    double load_rez=getCPULoad(vm);
+    if(load_rez==-1.0)
+    {
+      virDomainFree(vm);
+      virConnectClose(con);
+      return -1;
+    }
+    sprintf(Rez[lines],"load : %f",load_rez);
+    lines++;
+  }
 
   ////free VM domain and close connection to hypervisor
   virDomainFree(vm);
