@@ -418,8 +418,8 @@ double getCPULoad(virDomainPtr vm)
 {
 
   std::time_t s_time=std::time(nullptr);
-  virVcpuInfo cpu_info;
-  if(virDomainGetVcpuPinInfo(vm,0,&cpu_info,nullptr,0)!=0)
+  virDomainInfo cpu_info;
+  if(virDomainGetInfo(vm,&cpu_info)!=0)
   {
     ///nu s-au putut obtine datele
     return -1.0;
@@ -429,7 +429,7 @@ double getCPULoad(virDomainPtr vm)
 
   sleep(1);
 
-  if(virDomainGetVcpuPinInfo(vm,0,&cpu_info,nullptr,0)!=0)
+  if(virDomainGetInfo(vm,&cpu_info)!=0)
   {
     ///nu s-au putut obtine datele
     return -1.0;
