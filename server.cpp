@@ -185,7 +185,7 @@ void raspunde(void *arg)
 
       if(lines_rez==-1)
       {
-        printf("[server]Could not get %s from VM %s\n");
+        printf("[server]Could not get %s from VM %s\n",propriety,ident);
 
         bzero(&size_msg_send,sizeof(int));///cleaning send vars
         bzero(msg_send,1024*sizeof(char));
