@@ -77,7 +77,7 @@ int main (int argc, char *argv[])
     }
     msg_send[strlen(msg_send)-1]='\0';
     size_msg_send=strlen(msg_send)+1;
-    printf("[client]Sending %s of size %d",msg_send,size_msg_send);
+    printf("[client]Sending %s of size %d\n",msg_send,size_msg_send);
     
     if(write(sd,&size_msg_send,sizeof(int))<0)///sending size of msg
     {
@@ -103,7 +103,7 @@ int main (int argc, char *argv[])
 
     printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
-    if(strcmp(msg_recive,"help.text")==0)
+    if(strcmp(msg_recive,"help.txt")==0)
     {
       printf("[client]Info : \n");
 
@@ -114,10 +114,10 @@ int main (int argc, char *argv[])
         perror("[client]Error at read()\n");
       }
 
-      while(size_msg_recive!=0)
+      while(size_msg_recive>=0)
       {
         bzero(msg_recive,1024*sizeof(char));
-        if(read(sd,msg_recive,sizeof(int))<0)
+        if(read(sd,msg_recive,size_msg_recive)<0)
         {
           perror("[client]Error at read()\n");
         }

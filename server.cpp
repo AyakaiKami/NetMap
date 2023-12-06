@@ -136,6 +136,7 @@ void raspunde(void *arg)
   char msg_recive[1024];int size_msg_recive;
   while(is_open)
   {
+    printf("[server]Waitting for input on thread : %d \n",tdL.idThread);
     bzero(&size_msg_recive,sizeof(int));///cleaning recive vars
     bzero(msg_recive,1024*sizeof(char));
 
@@ -308,12 +309,12 @@ void raspunde(void *arg)
       }
 
       bzero(&size_msg_send,sizeof(int));
-      size_msg_send=0;
+      size_msg_send=-1;
       if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
       {
         perror("[server] Error at write()\n");
       }
-
+      fclose(helpf);
     }
     /*=========================================================================================*/
     /*                                    CLOSE                                                */
@@ -338,10 +339,10 @@ void raspunde(void *arg)
       }
       printf("[server]Client on thread %d is closing\n",tdL.idThread);
     }
-    else                                            
     /*=====================================================================================*/
     /*                                UNKNOWN COMMAND                                      */
-    {
+    else                                            
+   {
       bzero(&size_msg_send,sizeof(int));///cleaning send vars
       bzero(msg_send,1024*sizeof(char));
 
