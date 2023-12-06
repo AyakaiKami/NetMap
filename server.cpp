@@ -278,7 +278,7 @@ void raspunde(void *arg)
       strcpy(msg_send,"help.txt");
 
       size_msg_send = strlen(msg_send) + 1;
-      printf("[server] Sending %s of size %d\n", msg_send, size_msg_send);
+      printf("[server]Sending %s of size %d\n", msg_send, size_msg_send);
 
       if (write(tdL.cl, &size_msg_send, sizeof(int)) < 0) 
       {
@@ -296,13 +296,13 @@ void raspunde(void *arg)
       {
         
         size_msg_send = strlen(msg_send) + 1;
-        printf("[server] Sending %s of size %d\n", msg_send, size_msg_send);
+        printf("[server]Sending %s of size %d\n", msg_send, size_msg_send);
 
         if (write(tdL.cl, &size_msg_send, sizeof(int)) < 0) {
-            perror("[server] Error at write()\n");
+            perror("[server]Error at write()\n");
         }
         if (write(tdL.cl, msg_send, size_msg_send) < 0) {
-            perror("[server] Error at write()\n");
+            perror("[server]Error at write()\n");
         }
         bzero(&size_msg_send,sizeof(int));///cleaning send vars
         bzero(msg_send,1024*sizeof(char));
@@ -312,10 +312,10 @@ void raspunde(void *arg)
       size_msg_send=-1;
       if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
       {
-        perror("[server] Error at write()\n");
+        perror("[server]Error at write()\n");
       }
       fclose(helpf);
-    }
+    }else
     /*=========================================================================================*/
     /*                                    CLOSE                                                */
     if(strcmp(msg_recive,"close")==0)
