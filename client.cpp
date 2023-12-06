@@ -103,12 +103,42 @@ int main (int argc, char *argv[])
 
     printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
-    if(strcmp(msg_recive,"help text")==0)
+    if(strcmp(msg_recive,"help.text")==0)
     {
       printf("[client]Info : \n");
 
+      bzero(&size_msg_recive,sizeof(int));
+
+      if(read(sd,&size_msg_recive,sizeof(int))<0)
+      {
+        perror("[client]Error at read()\n");
+      }
+
+      while(size_msg_recive!=0)
+      {
+        bzero(msg_recive,1024*sizeof(char));
+        if(read(sd,msg_recive,sizeof(int))<0)
+        {
+          perror("[client]Error at read()\n");
+        }
+        printf("%s",msg_recive);
+
+        bzero(&size_msg_recive,sizeof(int));
+
+      if(read(sd,&size_msg_recive,sizeof(int))<0)
+      {
+        perror("[client]Error at read()\n");
+      }
+      }
+      printf("\n");
       
     }else
+    /*====================================================================*/
+    /*                          ERROR HELP                                */
+    if(strcmp(msg_recive,"Unable to send help :(")==0)
+    {
+      printf("[client]Unable to print help\n");
+    }
     /*====================================================================*/
     /*                      Info about a VM                               */
     if(strcmp(msg_recive,"Info about a VM")==0)

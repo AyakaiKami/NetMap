@@ -109,6 +109,8 @@ int main ()
 				
 	}//while    
 };				
+
+
 static void *treat(void * arg)
 {		
 		struct thData tdL; 
@@ -177,7 +179,7 @@ void raspunde(void *arg)
       printf("[server]Propriety is %s\n",propriety);
       printf("[server]Ident is %s\n",ident);
 
-      char rez[25][256];
+      char rez[50][256];
       int lines_rez=getPropFromVM(propriety,ident,rez);
 
       if(lines_rez==-1)
@@ -247,9 +249,71 @@ void raspunde(void *arg)
 
     }
     else
-    if(strncmp(msg_recive,"help")==0)
+    if(strcmp(msg_recive,"help")==0)
     {
+      FILE* helpf=fopen("help.txt","r");
+      if(helpf==nullptr)
+      {
+        bzero(&size_msg_send,sizeof(int));///cleaning send vars
+        bzero(msg_send,1024*sizeof(char));
+
+        strcpy(msg_send,"Unable to send help :(");
+        size_msg_send=strlen(msg_send)+1;
+        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        if(write(tdL.cl,msg_send,size_msg_send)<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+      }
       
+
+      bzero(&size_msg_send,sizeof(int));///cleaning send vars
+      bzero(msg_send,1024*sizeof(char));
+      strcpy(msg_send,"help.txt");
+
+      size_msg_send = strlen(msg_send) + 1;
+      printf("[server] Sending %s of size %d\n", msg_send, size_msg_send);
+
+      if (write(tdL.cl, &size_msg_send, sizeof(int)) < 0) 
+      {
+        perror("[server] Error at write()\n");
+      }
+      if (write(tdL.cl, msg_send, size_msg_send) < 0) 
+      {
+        perror("[server] Error at write()\n");
+      }
+
+      bzero(&size_msg_send,sizeof(int));///cleaning send vars
+      bzero(msg_send,1024*sizeof(char));
+      
+      while(fgets(msg_send,1024,helpf)!=nullptr)
+      {
+        
+        size_msg_send = strlen(msg_send) + 1;
+        printf("[server] Sending %s of size %d\n", msg_send, size_msg_send);
+
+        if (write(tdL.cl, &size_msg_send, sizeof(int)) < 0) {
+            perror("[server] Error at write()\n");
+        }
+        if (write(tdL.cl, msg_send, size_msg_send) < 0) {
+            perror("[server] Error at write()\n");
+        }
+        bzero(&size_msg_send,sizeof(int));///cleaning send vars
+        bzero(msg_send,1024*sizeof(char));
+      }
+
+      bzero(&size_msg_send,sizeof(int));
+      size_msg_send=0;
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server] Error at write()\n");
+      }
+
     }
     /*=========================================================================================*/
     /*                                    CLOSE                                                */
@@ -322,7 +386,7 @@ int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256])
   return 1;
 };
 
-int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
+int getPropFromVM(char Prop[256],char Ident[256],char Rez[50][256])
 {
   int lines=0;///nr de linii
   virInitialize();///deschidem libvirt
@@ -411,7 +475,29 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256])
     lines++;
 
   }
-
+///Get interface
+  if(strcmp(Prop,"interface")==0 || strcmp(Prop,"all")==0)
+{
+  virDomainInterfacePtr *ifaces=nullptr;
+  int count_if;
+  if((count_if=virDomainInterfaceAddresses(vm,&ifaces,VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE,0))<0)
+  {
+    virDomainFree(vm);
+    virConnectClose(con);
+    return -1;
+  }
+  strcpy(Rez[lines],"Interfaces : ");
+  lines++;
+  for(int i=0;i<count_if;i++)
+  {
+    strcpy(Rez[lines],ifaces[i]->name);
+    lines++;
+  }
+  for (int i = 0; i < count_if; i++)
+            virDomainInterfaceFree(ifaces[i]);
+  free(ifaces);
+}
+///Get load
   if(strcmp(Prop,"load")==0 || strcmp(Prop,"all")==0)
   {
     double load_rez=getCPULoad(vm);

@@ -1,0 +1,9 @@
+Commands :
+    1. get <propriety> <ip/id> 
+        Propriety : CPU
+                    RAM
+                    name
+                    interface (not yet) 
+                    state
+                    load
+                    
