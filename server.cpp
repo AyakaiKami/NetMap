@@ -12,6 +12,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <ctime>
+#include <sqlite3.h>
 /* portul folosit */
 #define PORT 2908
 
@@ -549,3 +550,15 @@ double getCPULoad(virDomainPtr vm)
 
   return load;
 };
+
+
+void hexagram()
+{
+  virConnectPtr con=virConnectOpen("qemu://system");///Stabilim conexiunea la hyperviser
+  if(con==nullptr)
+  {
+    printf("Failed to connect to hypervisor\n");
+    exit(EXIT_FAILURE);
+  }
+
+}
