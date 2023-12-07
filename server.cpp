@@ -594,8 +594,8 @@ void hexagram()
   for(int i=0;i<nr_vms;i++)
   {
     virDomainPtr vmp=virDomainLookupByID(con,ListdomainID[i]);
-    vm_info *vm=new vm_info;
-    
+    vm_info vm;
+    vm.name=virDomainGetName(vmp);
     virDomainFree(vmp);
   }
   virConnectClose(con);
