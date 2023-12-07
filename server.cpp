@@ -13,7 +13,7 @@
 #include <sstream>
 #include <ctime>
 #include <sqlite3.h>
-#include <>
+#include <vector>
 /* portul folosit */
 #define PORT 2908
 
@@ -36,6 +36,12 @@ double getCPULoad(virDomainPtr vm);
 
 struct vm_info
 {
+  char name[256];
+  char CPU[256];
+  char RAM[256];
+  char state[256];
+  char interface[256];
+  char load[256];
 
 };
 
@@ -582,13 +588,15 @@ void hexagram()
   
   ///parcurgem fiecare vm
   
-  
+
+  std::vector<vm_info>list_vm_info;
 
   for(int i=0;i<nr_vms;i++)
   {
-    virDomainPtr vm=virDomainLookupByID(con,ListdomainID[i]);
-
-    virDomainFree(vm);
+    virDomainPtr vmp=virDomainLookupByID(con,ListdomainID[i]);
+    vm_info *vm=new vm_info;
+    
+    virDomainFree(vmp);
   }
   virConnectClose(con);
 }
