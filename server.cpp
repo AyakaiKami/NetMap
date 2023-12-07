@@ -13,6 +13,7 @@
 #include <sstream>
 #include <ctime>
 #include <sqlite3.h>
+#include <>
 /* portul folosit */
 #define PORT 2908
 
@@ -33,6 +34,15 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256]);
 
 double getCPULoad(virDomainPtr vm);
 
+struct vm_info
+{
+
+};
+
+
+
+
+///====================================START==============================================================
 int main ()
 {
   struct sockaddr_in server;	// structura folosita de server
@@ -561,4 +571,24 @@ void hexagram()
     exit(EXIT_FAILURE);
   }
 
+  int nr_vms=virConnectNumOfDomains(con);///aflam nr de vm 
+
+  int *ListdomainID=new int[nr_vms];
+  nr_vms=virConnectListDomains(con,ListdomainID,nr_vms);////primim o lista cu vm urile pornite
+  if(nr_vms<0)
+  {
+    printf("[server]No virtual machine is on\n");
+  }
+  
+  ///parcurgem fiecare vm
+  
+  
+
+  for(int i=0;i<nr_vms;i++)
+  {
+    virDomainPtr vm=virDomainLookupByID(con,ListdomainID[i]);
+
+    virDomainFree(vm);
+  }
+  virConnectClose(con);
 }
