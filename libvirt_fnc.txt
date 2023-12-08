@@ -1,0 +1,1 @@
+virDomainQemuMonitorCommand(virDomainPtr vm,const char* cmd,char**result,unsigned int flags);

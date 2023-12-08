@@ -28,9 +28,9 @@ typedef struct thData{
 static void *treat(void *); /* functia executata de fiecare thread ce realizeaza comunicarea cu clientii */
 void raspunde(void *);
 
-int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256]);
+int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[256],char Ident_rez[256]);
 
-int getPropFromVM(char Prop[256],char Ident[256],char Rez[25][256]);
+int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[25][256]);
 
 double getCPULoad(virDomainPtr vm);
 
@@ -43,6 +43,7 @@ struct vm_info
   char state[256];
   int interface_nr;
   char interface_list[25][256];
+  char ip_address[25][256];
   char load[256];
 
 };
@@ -175,10 +176,11 @@ void raspunde(void *arg)
     if(strncmp(msg_recive,"get",strlen("get"))==0)
     {  
       char propriety[256];
+      char type[256];
       char ident[256];
-      if(getProp_Ident(msg_recive,propriety,ident)==-1)///wrong syntax at get <> <>
+      if(getProp_Type_Ident(msg_recive,propriety,type,ident)==-1)///wrong syntax at get <> <>
       {
-        printf("[server]Wrong syntax on call : get <prop> <ident>\n");
+        printf("[server]Wrong syntax on call : get <prop> <type> <ident>\n");
         bzero(&size_msg_send,sizeof(int));///cleaning send vars
         bzero(msg_send,1024*sizeof(char));
 
@@ -200,7 +202,7 @@ void raspunde(void *arg)
       printf("[server]Ident is %s\n",ident);
 
       char rez[50][256];
-      int lines_rez=getPropFromVM(propriety,ident,rez);
+      int lines_rez=getPropFromVM(propriety,type,ident,rez);
 
       if(lines_rez==-1)
       {
@@ -384,29 +386,36 @@ void raspunde(void *arg)
 
 
 
-int getProp_Ident(char msg_recive[1024],char Prop_rez[256],char Ident_rez[256])
+int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[256],char Ident_rez[256])
 {
   char *token=strtok(msg_recive," ");
-  int word_nr=0;
+  int word_nr=1;
+  printf("Got so far\n");
   while (token!=nullptr)
   {
-    token=strtok(nullptr," ");
-    word_nr++;
-    if(word_nr==1)
-    {
-      strcpy(Prop_rez,token);
-    };
+    printf("Token %d : %s ",word_nr,token);
     if(word_nr==2)
     {
+      strcpy(Prop_rez,token);
+    }else
+    if(word_nr==3)
+    {
+      strcpy(Type_rez,token);
+    }else
+    if(word_nr==4)
+    {
       strcpy(Ident_rez,token);
-    };
+    }
+    token=strtok(nullptr," ");
+    word_nr++;
   }
-  if(word_nr!=3)
+  printf("Got so far\n");
+  if(word_nr!=5)
     return -1;
   return 1;
 };
 
-int getPropFromVM(char Prop[256],char Ident[256],char Rez[50][256])
+int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256])
 {
   int lines=0;///nr de linii
   virInitialize();///deschidem libvirt
@@ -422,18 +431,17 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[50][256])
 
   virDomainPtr vm;///domeniu dupa IP/ID
 
-  if(Ident[0]>='0' && Ident[0]<='9')
-  ///presupunem ca s-a dat IP-ul deoarece incepe cu o cifra
+  if(strcmp(Type,"ID")==0)///ne conectam prin ID
   {
     int domainID = std::stoi(Ident);
-    vm=virDomainLookupByID(con,domainID);///nume sugestiv
-  }
-  else
+    vm=virDomainLookupByID(con,domainID);
+  }else
+  if(strcmp(Type,"IP")==0)///ne conectam prin IP
   {
     in_addr addr;
     if(inet_pton(AF_INET,Ident,&addr)==1)
     {
-      vm=virDomainLookupByUUIDString(con,Ident);///nume sufestiv
+      vm=virDomainLookupByUUIDString(con,Ident);
     }
       else
       {
@@ -441,6 +449,10 @@ int getPropFromVM(char Prop[256],char Ident[256],char Rez[50][256])
         printf("[server]Could not find VM\n");
         return -1;
       }
+  }else
+  if(strcmp(Type,"name")==0)///ne conectam prin nume
+  {
+    vm=virDomainLookupByName(con,Ident);
   }
 
   if(vm==nullptr)
@@ -609,7 +621,7 @@ vm_info vm_data_make(virDomainPtr vm)
 
   ///name
   strcpy(vm_d.name,virDomainGetName(vm));
-
+  
   virDomainInfo vm_d_info;
   if(virDomainGetInfo(vm,&vm_d_info)!=0)
   {
@@ -650,7 +662,7 @@ vm_info vm_data_make(virDomainPtr vm)
     sprintf(vm_d.load,"%f",load_rez);
 
 
-  ///interface
+  ///interface and ip address
 
   virDomainInterfacePtr *ifaces=nullptr;
   int count_if;
@@ -665,6 +677,13 @@ vm_info vm_data_make(virDomainPtr vm)
     for(int i=0;i<count_if;i++)
   {
     strcpy(vm_d.interface_list[i],ifaces[i]->name);
+    ///ip address for interface
+    _virDomainInterfaceIPAddress *ips=ifaces[i]->addrs;
+  
+    if(ips->type==VIR_IP_ADDR_TYPE_IPV4)
+      sprintf(vm_d.ip_address[i],"%s", ips->addr);
+    else
+      sprintf(vm_d.ip_address[i],"NULL");
   }
   }
   for (int i = 0; i < count_if; i++)
@@ -673,3 +692,4 @@ vm_info vm_data_make(virDomainPtr vm)
 
   return vm_d; 
 }
+

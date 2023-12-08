@@ -1,11 +1,14 @@
 Commands :
-    1. get <propriety> <ip/id> 
+    1. get <propriety> <type> <ident> 
         Propriety : CPU
                     RAM
                     name
                     interface (not yet) 
                     state
                     load
+        Type : id
+               ip
+               name
     2. machina 
         opens a new window in which the web map of the vm is 
     3. parabola <vm> <"command"> (executa o comada in masina virutala specificata)
