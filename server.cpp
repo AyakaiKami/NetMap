@@ -49,7 +49,7 @@ struct vm_info
 };
 
 vm_info vm_data_make(virDomainPtr vm);
-
+char** parabola();
 
 ///====================================START==============================================================
 int main ()
@@ -381,7 +381,7 @@ void raspunde(void *arg)
       }
     }
   } 
-
+  printf("[server]Closing client on thread %d is closing\n",tdL.idThread);
 }
 
 
@@ -699,3 +699,8 @@ vm_info vm_data_make(virDomainPtr vm)
   return vm_d; 
 }
 
+
+char** parabola(char vm_)
+{
+
+};
