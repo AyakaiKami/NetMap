@@ -11,7 +11,7 @@ Commands :
                name
     2. machina 
         opens a new window in which the web map of the vm is 
-    3. parabola <vm> <"command"> (executa o comada in masina virutala specificata)
+    3. parabola <type> <vm> <"command"> (executa o comada in masina virutala specificata)
                 <vm>must be id/ip/name
 
     4. help 
