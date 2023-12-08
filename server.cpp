@@ -470,10 +470,16 @@ int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256
     return -1;
   }
 
+///Get ID
+  if(strcmp(Prop,"ID")==0 || strcmp(Prop,"all")==0)
+  {
+    sprintf(Rez[lines],"ID : %d",virDomainGetID(vm));
+    lines++;
+  }
 ///Get name
   if(strcmp(Prop,"name")==0 || strcmp(Prop,"all")==0)
   {
-    strcpy(Rez[lines],virDomainGetName(vm));
+    sprintf(Rez[lines],"Name : %s",virDomainGetName(vm));
     lines++;
   }
 ///Get number of CPU and CPU time
