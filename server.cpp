@@ -589,8 +589,6 @@ void hexagram()
   }
   
   ///parcurgem fiecare vm
-  
-
   std::vector<vm_info>list_vm_info;
 
   for(int i=0;i<nr_vms;i++)
@@ -600,6 +598,8 @@ void hexagram()
     virDomainFree(vmp);
   }
   virConnectClose(con);
+
+  
 }
 
 vm_info vm_data_make(virDomainPtr vm)
