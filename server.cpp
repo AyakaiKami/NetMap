@@ -37,15 +37,17 @@ double getCPULoad(virDomainPtr vm);
 struct vm_info
 {
   char name[256];
-  char CPU[256];
+  char CPU_number[256];
+  char CPU_time[256];
   char RAM[256];
   char state[256];
-  char interface[256];
+  int interface_nr;
+  char interface_list[25][256];
   char load[256];
 
 };
 
-
+vm_info vm_data_make(virDomainPtr vm);
 
 
 ///====================================START==============================================================
@@ -594,9 +596,80 @@ void hexagram()
   for(int i=0;i<nr_vms;i++)
   {
     virDomainPtr vmp=virDomainLookupByID(con,ListdomainID[i]);
-    vm_info vm;
-    vm.name=virDomainGetName(vmp);
+    list_vm_info.push_back(vm_data_make(vmp));
     virDomainFree(vmp);
   }
   virConnectClose(con);
+}
+
+vm_info vm_data_make(virDomainPtr vm)
+{
+  
+  vm_info vm_d;
+
+  ///name
+  strcpy(vm_d.name,virDomainGetName(vm));
+
+  virDomainInfo vm_d_info;
+  if(virDomainGetInfo(vm,&vm_d_info)!=0)
+  {
+    printf("[server]Eroare la obtinerea datelor\n");
+    sprintf(vm_d.CPU_number,"NULL");
+    sprintf(vm_d.CPU_time,"NULL");
+    sprintf(vm_d.RAM,"NULL");
+  }
+  else
+  {
+  ///CPU
+  sprintf(vm_d.CPU_number,"%d",vm_d_info.nrVirtCpu);
+  sprintf(vm_d.CPU_time,"%d",vm_d_info.cpuTime);
+
+  ///RAM
+  sprintf(vm_d.RAM,"%d KB",vm_d_info.memory);
+  
+  }
+  ///state
+  int vm_state,reason;
+  if(virDomainGetState(vm,&vm_state,&reason,0)!=0)
+  {
+    perror("[server]Eroare la obinerea starii\n");
+    sprintf(vm_d.state,"NULL");
+  }
+  else
+  sprintf(vm_d.state,"%d",vm_state);
+
+  ///load
+
+  double load_rez=getCPULoad(vm);
+    if(load_rez==-1.0)
+    {
+      printf("[server]Eroare la getCPULoad\n");
+      sprintf(vm_d.load,"NULL");
+    }
+    else
+    sprintf(vm_d.load,"%f",load_rez);
+
+
+  ///interface
+
+  virDomainInterfacePtr *ifaces=nullptr;
+  int count_if;
+  if((count_if=virDomainInterfaceAddresses(vm,&ifaces,VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE,0))<0)
+  {
+    printf("[server]Eroare la obtinerea interfetelor\n");
+    vm_d.interface_nr=-1;
+  }
+  else
+  {
+    vm_d.interface_nr=count_if;
+    for(int i=0;i<count_if;i++)
+  {
+    strcpy(vm_d.interface_list[i],ifaces[i]->name);
+  }
+  }
+  for (int i = 0; i < count_if; i++)
+            virDomainInterfaceFree(ifaces[i]);
+  free(ifaces);
+
+  return vm_d; 
 }
