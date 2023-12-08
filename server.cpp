@@ -524,6 +524,12 @@ int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256
   {
     strcpy(Rez[lines],ifaces[i]->name);
     lines++;
+
+    ///Get IP address
+    _virDomainInterfaceIPAddress *ips=ifaces[i]->addrs;
+    if(ips->type==VIR_IP_ADDR_TYPE_IPV4)
+      sprintf(Rez[lines],"IP:%s", ips->addr);
+    lines++;
   }
   for (int i = 0; i < count_if; i++)
             virDomainInterfaceFree(ifaces[i]);
