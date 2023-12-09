@@ -49,7 +49,7 @@ struct vm_info
 };
 
 vm_info vm_data_make(virDomainPtr vm);
-char** parabola();
+int parabola(char msg_recive[1024],char Rez[50][256]);
 
 ///====================================START==============================================================
 int main ()
@@ -171,6 +171,75 @@ void raspunde(void *arg)
 
     printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    if(strncmp(msg_recive,"parabola",strlen("parabola"))==0)
+    {
+      char rez[50][256];
+      int lines=parabola(msg_recive,rez);
+      if(lines==-1)
+      {
+        printf("[server]Could not execute command\n");
+
+        bzero(&size_msg_send,sizeof(int));///cleaning send vars
+        bzero(msg_send,1024*sizeof(char));
+
+        strcpy(msg_send,"Could not execute command");
+        size_msg_send=strlen(msg_send)+1;
+        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        if(write(tdL.cl,msg_send,size_msg_send)<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+      }
+      else
+      {
+        bzero(&size_msg_send,sizeof(int));///cleaning send vars
+        bzero(msg_send,1024*sizeof(char));
+
+
+        strcpy(msg_send,"Parabola result");
+        size_msg_send=strlen(msg_send)+1;
+        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        if(write(tdL.cl,msg_send,size_msg_send)<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+
+    
+       printf("[server]Sending number of lines\n");
+        if(write(tdL.cl,&lines,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        for(int i=0;i<lines;i++)
+        {
+          bzero(&size_msg_send,sizeof(int));///cleaning send vars
+          bzero(msg_send,1024*sizeof(char));
+
+          strcpy(msg_send,rez[i]);
+          size_msg_send=strlen(msg_send)+1;
+          printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+        
+          if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+          {
+            perror("[server]Error at write()\n");
+          }
+          if(write(tdL.cl,msg_send,size_msg_send)<0)
+          {
+            perror("[server]Error at write()\n");
+          }
+          
+        }
+      }
+    }
+    else
     /*===================================================================================*/
     /*                               get <prop> <ident>                                  */
     if(strncmp(msg_recive,"get",strlen("get"))==0)
@@ -267,8 +336,6 @@ void raspunde(void *arg)
 
         }
       }
-      
-
     }
     else
     if(strcmp(msg_recive,"help")==0)
@@ -382,7 +449,7 @@ void raspunde(void *arg)
     }
   } 
   printf("[server]Closing client on thread %d is closing\n",tdL.idThread);
-}
+};
 
 
 
@@ -397,7 +464,7 @@ int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[25
     if(word_nr==2)
     {
       strcpy(Prop_rez,token);
-    }else
+    }else 
     if(word_nr==3)
     {
       strcpy(Type_rez,token);
@@ -409,7 +476,6 @@ int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[25
     token=strtok(nullptr," ");
     word_nr++;
   }
-  printf("Got so far\n");
   if(word_nr!=5)
     return -1;
   return 1;
@@ -706,7 +772,29 @@ vm_info vm_data_make(virDomainPtr vm)
 }
 
 
-char** parabola(char vm_)
+int parabola(char msg_recive[1024],char Rez[50][256])
 {
+  char Type[256];
+  char IDENT[256];
+  
+  char *token=strtok(msg_recive," ");
+  
+  if((token=strtok(nullptr," "))!=nullptr)
+    strcpy(Type,token);
+  else
+  {
+   printf("[server]Wrong syntax parabola <type> <ident> <command>\n");
+   return -1;
+  }
+  if((token=strtok(nullptr," "))!=nullptr)
+    strcpy(Type,token);
+  else
+  {
+    printf("[server]Wrong syntax parabola <type> <ident> <command>\n");
+    return -1;
+  }
 
+  
+  int lines=0;
+  return lines;
 };

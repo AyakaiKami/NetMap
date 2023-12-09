@@ -103,6 +103,39 @@ int main (int argc, char *argv[])
 
     printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    /*==============================================================*/
+    /*                          PARABOLA ERROR                      */
+    if(strcmp(msg_recive,"Could not execute command")==0)
+    {
+      printf("[client]Unable to execute command\n");
+    }
+    else
+    if(strcmp(msg_recive,"Parabola result")==0)
+    {
+      int nr_lines;
+      if(read(sd,&nr_lines,sizeof(int))<=0)
+      {
+        perror("[client]Error at read()\n");
+      }
+      for(int i=0;i<nr_lines;i++)
+      {
+        bzero(&size_msg_recive,sizeof(int));///cleaning output vars
+        bzero(msg_recive,1024*sizeof(char));
+
+        if(read(sd,&size_msg_recive,sizeof(int))<=0)
+        {
+          perror("[client]Error at read()\n");
+        }
+        if(read(sd,msg_recive,size_msg_recive)<=0)
+        {
+         perror("[client]Error at read()\n");
+        }
+
+        printf("[client]%s\n",msg_recive);///printing msg
+      }
+    }else
+    /*==============================================================*/
+    /*                          HELP                                */
     if(strcmp(msg_recive,"help.txt")==0)
     {
       printf("[client]Info : \n");
