@@ -49,7 +49,7 @@ struct vm_info
 };
 
 vm_info vm_data_make(virDomainPtr vm);
-int parabola(char msg_recive[1024],char Rez[50][256]);
+int parabola(char msg_recive[1024],char Rez[1024]);
 
 ///====================================START==============================================================
 int main ()
@@ -173,7 +173,7 @@ void raspunde(void *arg)
     ///Analizam raspunsul:
     if(strncmp(msg_recive,"parabola",strlen("parabola"))==0)
     {
-      char rez[50][256];
+      char rez[1024];
       int lines=parabola(msg_recive,rez);
       if(lines==-1)
       {
@@ -212,18 +212,11 @@ void raspunde(void *arg)
           perror("[server]Error at write()\n");
         }
 
-    
-       printf("[server]Sending number of lines\n");
-        if(write(tdL.cl,&lines,sizeof(int))<0)
-        {
-          perror("[server]Error at write()\n");
-        }
-        for(int i=0;i<lines;i++)
-        {
+          ///sending result command
           bzero(&size_msg_send,sizeof(int));///cleaning send vars
           bzero(msg_send,1024*sizeof(char));
 
-          strcpy(msg_send,rez[i]);
+          strcpy(msg_send,rez);
           size_msg_send=strlen(msg_send)+1;
           printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
         
@@ -235,8 +228,7 @@ void raspunde(void *arg)
           {
             perror("[server]Error at write()\n");
           }
-          
-        }
+
       }
     }
     else
@@ -772,10 +764,10 @@ vm_info vm_data_make(virDomainPtr vm)
 }
 
 
-int parabola(char msg_recive[1024],char Rez[50][256])
+int parabola(char msg_recive[1024],char Rez[1024])
 {
   char Type[256];
-  char IDENT[256];
+  char Ident[256];
   
   char *token=strtok(msg_recive," ");
   
@@ -794,7 +786,71 @@ int parabola(char msg_recive[1024],char Rez[50][256])
     return -1;
   }
 
-  
   int lines=0;
-  return lines;
+  virConnectPtr con=virConnectOpen("qemu:///system");
+
+  if(con==nullptr)///conexiunea nu s-a realizat
+  {
+    printf("[server]Failed to open connection\n");
+    return -1;
+  };
+
+  virDomainPtr vm;///domeniu dupa IP/ID
+
+  if(strcmp(Type,"ID")==0)///ne conectam prin ID
+  {
+    int domainID = std::stoi(Ident);
+    vm=virDomainLookupByID(con,domainID);
+  }else
+  if(strcmp(Type,"IP")==0)///ne conectam prin IP
+  {
+    in_addr addr;
+    if(inet_pton(AF_INET,Ident,&addr)==1)
+    {
+      vm=virDomainLookupByUUIDString(con,Ident);
+    }
+      else
+      {
+        virConnectClose(con);
+        printf("[server]Could not find VM\n");
+        return -1;
+      }
+  }else
+  if(strcmp(Type,"name")==0)///ne conectam prin nume
+  {
+    vm=virDomainLookupByName(con,Ident);
+  }
+
+  if(vm==nullptr)
+  {
+    virConnectClose(con);
+    printf("[server]Could not find VM\n");
+    return -1;
+  }
+  virStreamPtr stream=virStreamNew(con,0);
+  int flags_Stream_Send=VIR_DOMAIN_RUNNING | VIR_MIGRATE_LIVE |VIR_MIGRATE_UNDEFINE_SOURCE | VIR_MIGRATE_NON_SHARED_INC;
+
+  if(virStreamSend(stream,msg_recive,strlen(msg_recive))<0)
+  {
+    return -1;
+  }
+
+  size_t length_rez=0;
+  while (length_rez<sizeof(Rez)-1)
+  {
+    if(virStreamRecv(stream,Rez+length_rez,sizeof(Rez)-1-length_rez) <= 0)
+    {
+      break;
+    }
+    length_rez+=strlen(Rez+length_rez);
+  }
+  Rez[length_rez]='\0';
+  ///closing stream
+  virStreamFinish(stream);
+  virStreamFree(stream);
+
+  ///closing domain and connection
+  virDomainFree(vm);
+  virConnectClose(con);
+  return 1;
 };
