@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <libvirt/libvirt.h>
+#include <libvirt/libvirt-qemu.h>
 #include <arpa/inet.h>
 #include <sstream>
 #include <ctime>
@@ -768,24 +769,53 @@ int parabola(char msg_recive[1024],char Rez[1024])
 {
   char Type[256];
   char Ident[256];
-  
-  char *token=strtok(msg_recive," ");
-  
-  if((token=strtok(nullptr," "))!=nullptr)
-    strcpy(Type,token);
-  else
-  {
-   printf("[server]Wrong syntax parabola <type> <ident> <command>\n");
-   return -1;
-  }
-  if((token=strtok(nullptr," "))!=nullptr)
-    strcpy(Type,token);
-  else
-  {
-    printf("[server]Wrong syntax parabola <type> <ident> <command>\n");
-    return -1;
-  }
+  char Com[256];
 
+  char ic=msg_recive[0];
+
+  int nr_space=0;
+  int index=0;
+  int indexT=0,indexI=0,indexCom=0;
+  while (ic!='\0')
+  {
+    if(ic==' ')
+    {
+      if(nr_space==1)
+      {
+        Type[indexT]='\0';
+        printf("%s\n",Type);
+      }
+      
+      if(nr_space==2)
+      {
+        Ident[indexI]='\0';
+        printf("%s\n",Ident);
+      }
+      nr_space++;
+      ic=msg_recive[++index];
+      continue;
+    }
+    if(nr_space==1)
+    {
+      Type[indexT]=ic;
+      indexT++;
+    }
+
+    if(nr_space==2)
+    {
+      Ident[indexI]=ic;
+      indexI++;
+    }
+
+    if(nr_space>2)
+    {
+      Com[indexCom]=ic;
+      indexCom++;
+    }
+    ic=msg_recive[++index];
+  }
+  Com[indexCom]='\0';
+  printf("%s\n",Com);
   int lines=0;
   virConnectPtr con=virConnectOpen("qemu:///system");
 
@@ -799,7 +829,7 @@ int parabola(char msg_recive[1024],char Rez[1024])
 
   if(strcmp(Type,"ID")==0)///ne conectam prin ID
   {
-    int domainID = std::stoi(Ident);
+    int domainID = atoi(Ident);
     vm=virDomainLookupByID(con,domainID);
   }else
   if(strcmp(Type,"IP")==0)///ne conectam prin IP
@@ -827,27 +857,12 @@ int parabola(char msg_recive[1024],char Rez[1024])
     printf("[server]Could not find VM\n");
     return -1;
   }
-  virStreamPtr stream=virStreamNew(con,0);
-  int flags_Stream_Send=VIR_DOMAIN_RUNNING | VIR_MIGRATE_LIVE |VIR_MIGRATE_UNDEFINE_SOURCE | VIR_MIGRATE_NON_SHARED_INC;
 
-  if(virStreamSend(stream,msg_recive,strlen(msg_recive))<0)
-  {
-    return -1;
-  }
+  bzero(Rez,1024);
 
-  size_t length_rez=0;
-  while (length_rez<sizeof(Rez)-1)
-  {
-    if(virStreamRecv(stream,Rez+length_rez,sizeof(Rez)-1-length_rez) <= 0)
-    {
-      break;
-    }
-    length_rez+=strlen(Rez+length_rez);
-  }
-  Rez[length_rez]='\0';
-  ///closing stream
-  virStreamFinish(stream);
-  virStreamFree(stream);
+  ////execute command
+  printf("Execute command %s",Com);
+  Rez=virDomainQemuAgentCommand(vm,msg_recive,0,0);
 
   ///closing domain and connection
   virDomainFree(vm);
