@@ -15,6 +15,7 @@
 #include <ctime>
 #include <sqlite3.h>
 #include <vector>
+//#include <jsoncpp/json/json.h>
 /* portul folosit */
 #define PORT 2908
 
@@ -814,7 +815,7 @@ int parabola(char msg_recive[1024],char Rez[1024])
     }
     ic=msg_recive[++index];
   }
-  Com[indexCom]='\0';
+  Com[indexCom]='\n';
   printf("%s\n",Com);
   int lines=0;
   virConnectPtr con=virConnectOpen("qemu:///system");
@@ -861,9 +862,17 @@ int parabola(char msg_recive[1024],char Rez[1024])
   bzero(Rez,1024);
 
   ////execute command
-  printf("Execute command %s",Com);
-  Rez=virDomainQemuAgentCommand(vm,msg_recive,0,0);
-
+  printf("Execute command %s\n",Com);
+  
+  const char *command = "{ \"execute\": \"ls \" }";
+  char *result=virDomainQemuAgentCommand(vm,command,0,0);
+  if ( result != NULL) 
+  {
+    printf("Command executed %s\n",result);
+    free(result);
+  } else {
+      printf( "Failed to execute QEMU monitor command\n");
+  }
   ///closing domain and connection
   virDomainFree(vm);
   virConnectClose(con);
