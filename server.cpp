@@ -561,7 +561,7 @@ int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256
 
   if(strcmp(Type,"ID")==0)///ne conectam prin ID
   {
-    int domainID = std::stoi(Ident);
+    int domainID = atoi(Ident);
     vm=virDomainLookupByID(con,domainID);
   }else
   if(strcmp(Type,"IP")==0)///ne conectam prin IP
