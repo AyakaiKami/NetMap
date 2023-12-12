@@ -103,6 +103,42 @@ int main (int argc, char *argv[])
 
     printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    /*===============================================================*/
+    /*                          LIST                                 */
+    if(strcmp(msg_recive,"list could not be made")==0)
+    {
+      printf("[client]Server could not send list\n");
+      continue;
+    }
+    else
+    if(strcmp(msg_recive,"list was sent")==0)
+    {
+      int lines;
+      if(read(sd,&lines,sizeof(int))<=0)
+      {
+        perror("[client]Error at read()\n");
+      }
+
+      printf("IDs are :\n");
+      for(int i=0;i<lines;i++)
+      {
+        bzero(&size_msg_recive,sizeof(int));///cleaning output vars
+        bzero(msg_recive,1024*sizeof(char));
+
+        if(read(sd,&size_msg_recive,sizeof(int))<=0)
+        {
+          perror("[client]Error at read()\n");
+        }
+        if(read(sd,msg_recive,size_msg_recive)<=0)
+        {
+          perror("[client]Error at read()\n");
+        }        
+
+        printf("%s\n",msg_recive);
+      }
+    }
+
+
     /*==============================================================*/
     /*                          PARABOLA ERROR                      */
     if(strcmp(msg_recive,"Could not execute command")==0)

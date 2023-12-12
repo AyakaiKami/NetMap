@@ -9,10 +9,12 @@ Commands :
         Type : id
                ip
                name
-    2. machina 
+    2. list 
+        list IDs of all active VMs on the device
+    3. machina 
         opens a new window in which the web map of the vm is 
-    3. parabola <type> <vm> <"command"> (executa o comada in masina virutala specificata)
+    4. parabola <type> <vm> <"command"> (executa o comada in masina virutala specificata)
                 <vm>must be id/ip/name
 
-    4. help 
-    5. close
+    5. help 
+    6. close

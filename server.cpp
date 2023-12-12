@@ -53,6 +53,8 @@ struct vm_info
 vm_info vm_data_make(virDomainPtr vm);
 int parabola(char msg_recive[1024],char Rez[1024]);
 
+int list_vms(char Rez[25][1024]);
+
 ///====================================START==============================================================
 int main ()
 {
@@ -173,6 +175,72 @@ void raspunde(void *arg)
 
     printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    if(strcmp(msg_recive,"list")==0)
+    {
+      char rez[25][1024];
+      int lines;
+      if((lines=list_vms(rez))<0)
+      {
+        bzero(&size_msg_send,sizeof(int));
+        bzero(msg_send,1024*sizeof(char));
+
+        strcpy(msg_send,"list could not be made");;
+        size_msg_send=strlen(msg_send)+1;
+        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+        {
+          perror("[server]Error at write()\n");
+        }
+        if(write(tdL.cl,msg_send,size_msg_send)<0)
+        {
+          perror("[server]Error at write()\n");
+        } 
+        continue;
+      }
+
+      bzero(&size_msg_send,sizeof(int));
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,"list was sent");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write\n");
+      }
+
+      if(write(tdL.cl,&lines,sizeof(int))<0)
+      {
+        perror("[server]Error at write\n");
+      }
+      for(int i=0;i<lines;i++)
+      {
+      bzero(&size_msg_send,sizeof(int));
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,rez[i]);;
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write\n");
+      }        
+      }
+    }
+    else
+    /*======================================================================*/
+    /*                         PARABOLA                                     */
     if(strncmp(msg_recive,"parabola",strlen("parabola"))==0)
     {
       char rez[1024];
@@ -656,7 +724,7 @@ double getCPULoad(virDomainPtr vm)
 
 void hexagram()
 {
-  virConnectPtr con=virConnectOpen("qemu://system");///Stabilim conexiunea la hyperviser
+  virConnectPtr con=virConnectOpen("qemu:///system");///Stabilim conexiunea la hyperviser
   if(con==nullptr)
   {
     printf("Failed to connect to hypervisor\n");
@@ -878,3 +946,40 @@ int parabola(char msg_recive[1024],char Rez[1024])
   virConnectClose(con);
   return 1;
 };
+
+
+
+int list_vms(char rez[25][1024])
+{
+  printf("here\n");
+  virConnectPtr con=virConnectOpen("qemu:///system");
+  
+  if(con==NULL)
+  { 
+    printf("[server]Failed to connect to hypervisor\n"); 
+    return -1;
+  }
+
+  int nr_vms=virConnectNumOfDomains(con);
+  printf("here\n");
+  if(nr_vms>0)
+  {
+    int *vmIDs=new int[nr_vms];
+
+    printf("here");
+    if(virConnectListDomains(con,vmIDs,nr_vms)<0)
+    {
+      printf("[server]Failed to get list of IDs\n");
+      return -1;
+    }
+
+    for(int i=0;i<nr_vms;i++)
+    {
+      printf("%d\n",vmIDs[i]);
+      sprintf(rez[i],"%d",vmIDs[i]);
+    }
+    free(vmIDs);
+  }
+  virConnectClose(con);
+  return nr_vms;
+}
