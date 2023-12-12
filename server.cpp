@@ -983,3 +983,17 @@ int list_vms(char rez[25][1024])
   virConnectClose(con);
   return nr_vms;
 }
+
+
+int insert_vm_info(vm_info vm_in)
+{
+  sqlite3 *data_base;
+
+  if(sqlite3_open("",&data_base)!=SQLITE_OK)
+  {
+    printf("[server]Failed to open database\n");
+    return -1;
+  }
+
+  if(sqlite3_prepare16_v2(db,stmt,))
+}
