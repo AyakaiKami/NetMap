@@ -120,6 +120,10 @@ int main (int argc, char *argv[])
       }
 
       printf("IDs are :\n");
+      if(lines==0)
+      {
+        printf("None\n");
+      }
       for(int i=0;i<lines;i++)
       {
         bzero(&size_msg_recive,sizeof(int));///cleaning output vars
