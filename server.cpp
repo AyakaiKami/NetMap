@@ -995,5 +995,7 @@ int insert_vm_info(vm_info vm_in)
     return -1;
   }
 
-  if(sqlite3_prepare16_v2(db,stmt,))
-}
+  char stmt[1024];
+  strcpy(stmt,"insert into table VM_table () values ();",vm_in.name,);
+
+};
