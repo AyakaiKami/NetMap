@@ -19,6 +19,7 @@
 /* portul folosit */
 #define PORT 2908
 
+int port_empty=2909;
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
@@ -159,8 +160,76 @@ void raspunde(void *arg)
   pid_t pid_window;
 
   int is_open=1;
-  char msg_send[1024];int size_msg_send;
-  char msg_recive[1024];int size_msg_recive;
+  char msg_send[1024];//parent
+  int size_msg_send;//parent
+  char msg_recive[1024];//parent
+  int size_msg_recive;//parent
+
+  int wpipe[2];///parent writes to child
+  int rpipe[2];///parent read from child
+
+  if((pid_window=fork())==-1 || pipe(wpipe)==-1 || pipe(rpipe)==-1)
+  {
+    printf("[server]Closing client on thread %d is closing\n",tdL.idThread);
+    exit(EXIT_FAILURE);
+  }
+
+
+
+  if(pid_window==0)///child
+  {
+    close(wpipe[1]);////child cant write with this pipe
+    close(rpipe[0]);////child cant read with this pipe
+  
+    ////new connection to the client child
+    int serverChildSocket=socket(AF_INET,SOCK_STREAM,0);
+    if(serverChildSocket==-1)
+    {
+      printf("[server]Failed\n");
+      exit(EXIT_FAILURE);
+    }
+    
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons(port_empty);
+
+  if (bind(serverChildSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) {
+      printf("Error binding socket\n");
+      close(serverChildSocket);
+      close(wpipe[0]);
+      close(rpipe[1]);
+      exit(EXIT_FAILURE);
+    }
+  
+    sockaddr_in clientAddress;
+    socklen_t clientAddrLen = sizeof(clientAddress);
+    int clientSocket = accept(serverChildSocket, (struct sockaddr*)&clientAddress, &clientAddrLen);
+    if (clientSocket == -1) {
+        printf("Error accepting connection\n");
+        close(serverChildSocket);
+        close(wpipe[0]);
+        close(rpipe[1]);
+        exit(EXIT_FAILURE);
+    }
+
+    while(true)
+    {
+      
+    }
+  
+  
+  
+    close(wpipe[0]);
+    close(rpipe[1]);
+    close(serverChildSocket);
+    port_empty--;
+    exit(EXIT_SUCCESS);
+  }
+  
+  //////==============PARENT=====================
+  close(wpipe[0]);
+  close(rpipe[1]);
   while(is_open)
   {
     printf("[server]Waitting for input on thread : %d \n",tdL.idThread);
@@ -515,6 +584,8 @@ void raspunde(void *arg)
     }
   } 
   printf("[server]Closing client on thread %d is closing\n",tdL.idThread);
+  close(wpipe[1]);
+  close(rpipe[0]);
 };
 
 

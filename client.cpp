@@ -20,8 +20,6 @@ extern int errno;
 /* portul de conectare la server*/
 int port;
 
-int is_window_on=0;
-pid_t pid_window;
 
 int main (int argc, char *argv[])
 {
@@ -67,6 +65,44 @@ int main (int argc, char *argv[])
   char msg_send[1024];int size_msg_send;
   char msg_recive[1024];int size_msg_recive;
   fflush(stdout);
+  
+  int wpipe[2];///parent writes to child
+  int rpipe[2];///parent read from child
+
+  int is_window_on=0;
+  pid_t pid_window;
+  
+  if((pid_window=fork())==-1 || pipe(wpipe)==-1 || pipe(rpipe)==-1)
+  {
+    exit(EXIT_FAILURE);
+  }
+  if(pid_window==0)///child
+  {
+    close(wpipe[1]);////child cant write with this pipe
+    close(rpipe[0]);////child cant read with this pipe
+  
+    ////new connection to the client child
+  
+    
+  
+  
+  
+  
+  
+  
+  
+  
+    close(wpipe[0]);
+    close(rpipe[1]);
+    exit(EXIT_SUCCESS);
+  }
+  
+  
+  
+  
+  close(wpipe[0]);
+  close(rpipe[1]);
+  /*==============================PARENT==================================*/
   while(is_open)
   {
     printf("Waiting command : ");
@@ -274,6 +310,8 @@ int main (int argc, char *argv[])
     }
 
   }
+  close(wpipe[1]);
+  close(rpipe[0]);
   /* inchidem conexiunea, am terminat */
   close (sd);
 };
