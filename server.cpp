@@ -212,7 +212,7 @@ void raspunde(void *arg)
         close(rpipe[1]);
         exit(EXIT_FAILURE);
     }
-
+    port_empty++;
     while(true)
     {
       
@@ -230,6 +230,12 @@ void raspunde(void *arg)
   //////==============PARENT=====================
   close(wpipe[0]);
   close(rpipe[1]);
+  
+  if(write(tdL.cl,&port_empty,sizeof(int))<0)
+  {
+    perror("[server]Error sending port\n");
+  }
+
   while(is_open)
   {
     printf("[server]Waitting for input on thread : %d \n",tdL.idThread);

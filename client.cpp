@@ -69,6 +69,7 @@ int main (int argc, char *argv[])
   int wpipe[2];///parent writes to child
   int rpipe[2];///parent read from child
 
+  char msg_c_p[1024];int size_msg_c_p;
   int is_window_on=0;
   pid_t pid_window;
   
@@ -83,14 +84,26 @@ int main (int argc, char *argv[])
   
     ////new connection to the client child
   
+    int sd_child;
+    struct sockaddr_in server_child;
     
+    int port;
   
+    if((sd_child=socket(AF_INET,SOCK_STREAM,0))==-1)
+    {
+      perror("Eror at socket()\n");
+      return errno;
+    }
   
-  
-  
-  
-  
-  
+    server.sin_family=AF_INET;
+    server.sin_addr.s_addr=inet_addr("0");
+    server.sin_port=htons(port);
+
+    if (connect (sd_child, (struct sockaddr *) &server_child,sizeof (struct sockaddr)) == -1)
+    {
+      perror ("[client]Eroare la connect().\n");
+      return errno;
+    }
   
     close(wpipe[0]);
     close(rpipe[1]);
@@ -99,10 +112,22 @@ int main (int argc, char *argv[])
   
   
   
-  
+  /*==============================PARENT==================================*/
   close(wpipe[0]);
   close(rpipe[1]);
-  /*==============================PARENT==================================*/
+  int port_empty;
+  if(read(sd,&port_empty,sizeof(int))<0)
+  {
+    perror("[client]Read error\n");
+  }
+
+
+  if(write(wpipe[1],&port_empty,sizeof(int))<0)///sending port to child
+  {
+    perror("[client]Write error\n");
+  }
+
+
   while(is_open)
   {
     printf("Waiting command : ");
