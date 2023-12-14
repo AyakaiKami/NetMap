@@ -155,6 +155,9 @@ void raspunde(void *arg)
 	struct thData tdL; 
 	tdL= *((struct thData*)arg);
 	
+  int is_window_on=0;
+  pid_t pid_window;
+
   int is_open=1;
   char msg_send[1024];int size_msg_send;
   char msg_recive[1024];int size_msg_recive;
@@ -175,6 +178,51 @@ void raspunde(void *arg)
 
     printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    /*======================================================================*/
+    /*                                HEXAGRAM                              */
+    if(strcmp(msg_recive,"hexagram")==0)
+    {
+      bzero(&size_msg_send,sizeof(int));
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,"open hexagram");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write\n");
+      }
+
+      bzero(&size_msg_recive,sizeof(int));///cleaning recive vars
+      bzero(msg_recive,1024*sizeof(char));
+
+      if(read(tdL.cl,&size_msg_recive,sizeof(int))<=0)
+      {
+        perror("[server]Error at read()\n");
+      }
+      if(read(tdL.cl,msg_recive,size_msg_recive)<=0)
+      {
+        perror("[server]Error at read()\n");
+      }
+
+      if(strcmp(msg_recive,"Failed fork")==0)
+      {
+        continue;
+      }
+    
+      if(strcmp(msg_recive,"fork done")==0)
+      {
+        is_window_on=1;
+
+        
+      }
+    }
+    else
     if(strcmp(msg_recive,"list")==0)
     {
       char rez[25][1024];

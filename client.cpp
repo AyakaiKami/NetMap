@@ -20,6 +20,9 @@ extern int errno;
 /* portul de conectare la server*/
 int port;
 
+int is_window_on=0;
+pid_t pid_window;
+
 int main (int argc, char *argv[])
 {
   int sd;			// descriptorul de socket
@@ -103,6 +106,51 @@ int main (int argc, char *argv[])
 
     printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    /*================================================================*/
+    /*                           HEXAGRAM                             */
+    if(strcmp(msg_recive,"open hexagram")==0)
+    {
+      if((pid_window=fork())==-1 || is_window_on==1)
+      {
+        bzero(&size_msg_recive,sizeof(int));///cleaning output vars
+        bzero(msg_recive,1024*sizeof(char));
+
+        printf("Failed to fork or window already open\n");
+        strcpy(msg_send,"Failed fork");
+        size_msg_send=strlen(msg_send)+1;
+        printf("[client]Sending %s of size %d\n",msg_send,size_msg_send);
+
+        
+        if(write(sd,&size_msg_send,sizeof(int))<0)///sending size of msg
+        {
+          perror("[client]Error at write()\n");
+        }
+        if(write(sd,msg_send,size_msg_send)<0)///sending msg
+        {
+          perror("[client]Error at write()\n");
+        }
+        continue;
+      }
+        is_window_on=1;
+        strcpy(msg_send,"fork done");
+        size_msg_send=strlen(msg_send)+1;
+        printf("[client]Sending %s of size %d\n",msg_send,size_msg_send);
+    
+        if(write(sd,&size_msg_send,sizeof(int))<0)///sending size of msg
+        {
+          perror("[client]Error at write()\n");
+        }
+        if(write(sd,msg_send,size_msg_send)<0)///sending msg
+        {
+          perror("[client]Error at write()\n");
+        }
+        ///======================CHILD===============================
+      if(pid_window==0)
+      {
+
+      }
+    }
+    else
     /*===============================================================*/
     /*                          LIST                                 */
     if(strcmp(msg_recive,"list could not be made")==0)
