@@ -87,9 +87,10 @@ int main (int argc, char *argv[])
     int sd_child;
     struct sockaddr_in server_child;
     
-    int port;
+    int port_c;
+    bzero(&port_c,sizeof(int));
   
-    if(read(wpipe[0],&port,sizeof(int))<0)
+    if(read(wpipe[0],&port_c,sizeof(port_c))<0)
     {
       perror("Did not get port\n");
       
@@ -100,9 +101,10 @@ int main (int argc, char *argv[])
       return errno;
     }
   
+    printf("Port recived %d\n",port_c);
     server.sin_family=AF_INET;
     server.sin_addr.s_addr=inet_addr(argv[1]);
-    server.sin_port=htons(port);
+    server.sin_port=htons(port_c);
 
     if (connect (sd_child, (struct sockaddr *) &server_child,sizeof (struct sockaddr)) == -1)
     {
@@ -125,8 +127,6 @@ int main (int argc, char *argv[])
   {
     perror("[client]Read error\n");
   }
-
-  printf("Port recived %d\n",port_empty);
 
   if(write(wpipe[1],&port_empty,sizeof(int))<0)///sending port to child
   {
