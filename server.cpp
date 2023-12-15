@@ -37,7 +37,7 @@ int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[25
 int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256]);
 
 double getCPULoad(virDomainPtr vm);
-
+std::map<char[256],char[256]> hexagram();
 struct vm_info
 {
   char name[256];
@@ -1066,7 +1066,7 @@ int insert_vm_info(vm_info vm_in)
 
 };
 
-void hexagram()
+std::map<char[256],char[256]> hexagram()
 {
   virConnectPtr con=virConnectOpen("qemu:///system");///Stabilim conexiunea la hyperviser
   if(con==nullptr)
@@ -1100,7 +1100,9 @@ void hexagram()
     for(int j=i+1;j<list_vm_info.size();j++)
       if(vm_con(list_vm_info[i],list_vm_info[j])==1)
       {
-        VMconnections[list_vm_info[i].name]=list_vm_info[j].name;
+        char n1[256];strcpy(n1,list_vm_info[i].name);
+        char n2[256];strcpy(n1,list_vm_info[j].name);
+        strcpy(VMconnections[n1],n2);
       }
 };
 
