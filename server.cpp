@@ -1099,10 +1099,18 @@ void hexagram()
 
 int vm_con(vm_info vm1,vm_info vm2)
 {
+  char ip_vm1[256];strcpy(ip_vm1,vm1.ip_address[0]);
+  char ip_vm2[256];strcpy(ip_vm2,vm2.ip_address[0]);
 
-
-
-
-
-  return 0;
+  int index=0;
+  int nr_points=0;
+  while(nr_points<3)
+  {
+    if(ip_vm1[index]!=ip_vm2[index])
+      return 0;
+    if(ip_vm1[index]=='.')
+      nr_points++;
+    index++;
+  }
+  return 1;
 }
