@@ -213,7 +213,6 @@ void raspunde(void *arg)
     }
     sockaddr_in clientAddress;
     socklen_t clientAddrLen = sizeof(clientAddress);
-    sleep(1);
     int clientSocket = accept(serverChildSocket, (struct sockaddr*)&clientAddress, &clientAddrLen);
     if (clientSocket == -1) 
     {
