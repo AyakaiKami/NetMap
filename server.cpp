@@ -15,6 +15,7 @@
 #include <ctime>
 #include <sqlite3.h>
 #include <vector>
+#include <map>
 //#include <jsoncpp/json/json.h>
 /* portul folosit */
 #define PORT 2908
@@ -1094,7 +1095,13 @@ void hexagram()
   }
   virConnectClose(con);
 
-  
+  std::map<char[256],char[256]>VMconnections;
+  for(int i=0;i<list_vm_info.size()-1;i++)
+    for(int j=i+1;j<list_vm_info.size();j++)
+      if(vm_con(list_vm_info[i],list_vm_info[j])==1)
+      {
+        VMconnections[list_vm_info[i].name]=list_vm_info[j].name;
+      }
 };
 
 int vm_con(vm_info vm1,vm_info vm2)
