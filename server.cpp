@@ -16,6 +16,7 @@
 #include <sqlite3.h>
 #include <vector>
 #include <map>
+#include <cstring>
 //#include <jsoncpp/json/json.h>
 /* portul folosit */
 #define PORT 2908
@@ -37,7 +38,7 @@ int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[25
 int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256]);
 
 double getCPULoad(virDomainPtr vm);
-std::map<char[256],char[256]> hexagram();
+std::map<std::string,std::string> hexagram();
 struct vm_info
 {
   char name[256];
@@ -1066,7 +1067,7 @@ int insert_vm_info(vm_info vm_in)
 
 };
 
-std::map<char[256],char[256]> hexagram()
+std::map<std::string,std::string> hexagram()
 {
   virConnectPtr con=virConnectOpen("qemu:///system");///Stabilim conexiunea la hyperviser
   if(con==nullptr)
@@ -1095,14 +1096,12 @@ std::map<char[256],char[256]> hexagram()
   }
   virConnectClose(con);
 
-  std::map<char[256],char[256]>VMconnections;
+  std::map<std::string,std::string>VMconnections;
   for(int i=0;i<list_vm_info.size()-1;i++)
     for(int j=i+1;j<list_vm_info.size();j++)
       if(vm_con(list_vm_info[i],list_vm_info[j])==1)
       {
-        char n1[256];strcpy(n1,list_vm_info[i].name);
-        char n2[256];strcpy(n1,list_vm_info[j].name);
-        strcpy(VMconnections[n1],n2);
+        VMconnections[std::string(list_vm_info[i].name)]=std::string(list_vm_info[j].name);
       }
 };
 
