@@ -33,7 +33,7 @@ void raspunde(void *);
 
 int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[256],char Ident_rez[256]);
 
-int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[25][256]);
+int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256]);
 
 double getCPULoad(virDomainPtr vm);
 
@@ -56,6 +56,7 @@ int parabola(char msg_recive[1024],char Rez[1024]);
 
 int list_vms(char Rez[25][1024]);
 
+int vm_con(vm_info vm1,vm_info vm2);////are 2 vm s connected?
 ///====================================START==============================================================
 int main ()
 {
@@ -818,38 +819,6 @@ double getCPULoad(virDomainPtr vm)
 };
 
 
-void hexagram()
-{
-  virConnectPtr con=virConnectOpen("qemu:///system");///Stabilim conexiunea la hyperviser
-  if(con==nullptr)
-  {
-    printf("Failed to connect to hypervisor\n");
-    exit(EXIT_FAILURE);
-  }
-
-  int nr_vms=virConnectNumOfDomains(con);///aflam nr de vm 
-
-  int *ListdomainID=new int[nr_vms];
-  nr_vms=virConnectListDomains(con,ListdomainID,nr_vms);////primim o lista cu vm urile pornite
-  if(nr_vms<0)
-  {
-    printf("[server]No virtual machine is on\n");
-  }
-  
-  ///parcurgem fiecare vm
-  std::vector<vm_info>list_vm_info;
-
-  for(int i=0;i<nr_vms;i++)
-  {
-    virDomainPtr vmp=virDomainLookupByID(con,ListdomainID[i]);
-    list_vm_info.push_back(vm_data_make(vmp));
-    virDomainFree(vmp);
-  }
-  virConnectClose(con);
-
-  
-}
-
 vm_info vm_data_make(virDomainPtr vm)
 {
   
@@ -1095,3 +1064,45 @@ int insert_vm_info(vm_info vm_in)
   //strcpy(stmt,"insert into table VM_table () values ();",vm_in.name,);
 
 };
+
+void hexagram()
+{
+  virConnectPtr con=virConnectOpen("qemu:///system");///Stabilim conexiunea la hyperviser
+  if(con==nullptr)
+  {
+    printf("Failed to connect to hypervisor\n");
+    exit(EXIT_FAILURE);
+  }
+
+  int nr_vms=virConnectNumOfDomains(con);///aflam nr de vm 
+
+  int *ListdomainID=new int[nr_vms];
+  nr_vms=virConnectListDomains(con,ListdomainID,nr_vms);////primim o lista cu vm urile pornite
+  if(nr_vms<0)
+  {
+    printf("[server]No virtual machine is on\n");
+  }
+  
+  ///parcurgem fiecare vm
+  std::vector<vm_info>list_vm_info;
+
+  for(int i=0;i<nr_vms;i++)
+  {
+    virDomainPtr vmp=virDomainLookupByID(con,ListdomainID[i]);
+    list_vm_info.push_back(vm_data_make(vmp));
+    virDomainFree(vmp);
+  }
+  virConnectClose(con);
+
+  
+};
+
+int vm_con(vm_info vm1,vm_info vm2)
+{
+
+
+
+
+
+  return 0;
+}
