@@ -194,7 +194,8 @@ void raspunde(void *arg)
     serverAddress.sin_addr.s_addr = INADDR_ANY;
     serverAddress.sin_port = htons(port_empty);
 
-  if (bind(serverChildSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) {
+    if (bind(serverChildSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) 
+    {
       printf("Error binding socket\n");
       close(serverChildSocket);
       close(wpipe[0]);
@@ -202,11 +203,20 @@ void raspunde(void *arg)
       exit(EXIT_FAILURE);
     }
   
+    if (listen(serverChildSocket, 5) == -1) 
+    { 
+      printf("Error listening for child client connections\n");
+      close(serverChildSocket);
+      close(wpipe[0]);
+      close(rpipe[1]);
+      exit(EXIT_FAILURE);
+    }
     sockaddr_in clientAddress;
     socklen_t clientAddrLen = sizeof(clientAddress);
     sleep(1);
     int clientSocket = accept(serverChildSocket, (struct sockaddr*)&clientAddress, &clientAddrLen);
-    if (clientSocket == -1) {
+    if (clientSocket == -1) 
+    {
         printf("Error accepting connection\n");
         close(serverChildSocket);
         close(wpipe[0]);

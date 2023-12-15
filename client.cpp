@@ -89,6 +89,11 @@ int main (int argc, char *argv[])
     
     int port;
   
+    if(read(wpipe[0],&port,sizeof(int))<0)
+    {
+      perror("Did not get port\n");
+      
+    }
     if((sd_child=socket(AF_INET,SOCK_STREAM,0))==-1)
     {
       perror("Eror at socket()\n");
@@ -96,12 +101,12 @@ int main (int argc, char *argv[])
     }
   
     server.sin_family=AF_INET;
-    server.sin_addr.s_addr=inet_addr("0");
+    server.sin_addr.s_addr=inet_addr(argv[1]);
     server.sin_port=htons(port);
 
     if (connect (sd_child, (struct sockaddr *) &server_child,sizeof (struct sockaddr)) == -1)
     {
-      perror ("[client]Eroare la connect().\n");
+      perror ("[client_child]Eroare la connect().\n");
       return errno;
     }
   
@@ -121,6 +126,7 @@ int main (int argc, char *argv[])
     perror("[client]Read error\n");
   }
 
+  printf("Port recived %d\n",port_empty);
 
   if(write(wpipe[1],&port_empty,sizeof(int))<0)///sending port to child
   {
