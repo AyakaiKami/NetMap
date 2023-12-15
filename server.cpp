@@ -168,13 +168,18 @@ void raspunde(void *arg)
   int wpipe[2];///parent writes to child
   int rpipe[2];///parent read from child
 
-  if((pid_window=fork())==-1 || pipe(wpipe)==-1 || pipe(rpipe)==-1)
+  if(pipe(wpipe)==-1)
   {
-    printf("[server]Closing client on thread %d is closing\n",tdL.idThread);
     exit(EXIT_FAILURE);
   }
-
-
+  if(pipe(rpipe)==-1)
+  {
+    exit(EXIT_FAILURE);
+  }
+  if((pid_window=fork())==-1 )
+  {
+    exit(EXIT_FAILURE);
+  }
 
   if(pid_window==0)///child
   {

@@ -61,9 +61,6 @@ int main (int argc, char *argv[])
       return errno;
     }
 
-  int is_open=1;
-  char msg_send[1024];int size_msg_send;
-  char msg_recive[1024];int size_msg_recive;
   fflush(stdout);
   
   int wpipe[2];///parent writes to child
@@ -73,7 +70,15 @@ int main (int argc, char *argv[])
   int is_window_on=0;
   pid_t pid_window;
   
-  if((pid_window=fork())==-1 || pipe(wpipe)==-1 || pipe(rpipe)==-1)
+  if(pipe(wpipe)==-1)
+  {
+    exit(EXIT_FAILURE);
+  }
+  if(pipe(rpipe)==-1)
+  {
+    exit(EXIT_FAILURE);
+  }
+  if((pid_window=fork())==-1 )
   {
     exit(EXIT_FAILURE);
   }
@@ -81,7 +86,7 @@ int main (int argc, char *argv[])
   {
     close(wpipe[1]);////child cant write with this pipe
     close(rpipe[0]);////child cant read with this pipe
-  
+    sleep(1);
     ////new connection to the client child
   
     int sd_child;
@@ -101,10 +106,9 @@ int main (int argc, char *argv[])
       return errno;
     }
   
-    printf("Port recived %d\n",port_c);
-    server.sin_family=AF_INET;
-    server.sin_addr.s_addr=inet_addr(argv[1]);
-    server.sin_port=htons(port_c);
+    server_child.sin_family=AF_INET;
+    server_child.sin_addr.s_addr=inet_addr(argv[1]);
+    server_child.sin_port=htons(port_c);
 
     if (connect (sd_child, (struct sockaddr *) &server_child,sizeof (struct sockaddr)) == -1)
     {
@@ -112,6 +116,7 @@ int main (int argc, char *argv[])
       return errno;
     }
   
+
     close(wpipe[0]);
     close(rpipe[1]);
     exit(EXIT_SUCCESS);
@@ -127,13 +132,16 @@ int main (int argc, char *argv[])
   {
     perror("[client]Read error\n");
   }
-
+ 
   if(write(wpipe[1],&port_empty,sizeof(int))<0)///sending port to child
   {
     perror("[client]Write error\n");
   }
 
-
+  int is_open=1;
+  char msg_send[1024];int size_msg_send;
+  char msg_recive[1024];int size_msg_recive;
+  
   while(is_open)
   {
     printf("Waiting command : ");
