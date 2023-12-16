@@ -278,9 +278,66 @@ void raspunde(void *arg)
             perror("[server_child]Error at write\n");
           }                    
         }
-      
+
         auto start_time=std::chrono::steady_clock::now();
-        const std::chrono::mi
+        int hexagram_on=1;
+        while (hexagram_on)
+        {
+          auto current_time=std::chrono::steady_clock::now();
+          auto dif_minutes = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
+        
+          if(dif_minutes>=60*2)
+          {
+            vms_con=hexagram();
+            mapSize=vms_con.size();
+
+            
+            if(write(serverChildSocket,&mapSize,sizeof(size_t))<=0)
+            {
+              perror("[server_child]Error write\n");
+            }
+
+            for(const auto& ind :vms_con)
+        {
+          size_t k_size=ind.first.size();
+          if(write(serverChildSocket,&k_size,sizeof(size_t))<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }
+          if(write(serverChildSocket,ind.first.c_str(),k_size)<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }
+
+          size_t v_size=ind.second.size();
+          if(write(serverChildSocket,&v_size,sizeof(size_t))<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }
+          if(write(serverChildSocket,ind.second.c_str(),v_size)<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }                    
+        }
+
+          }
+        bzero(&size_msg_from_client_c,sizeof(int));
+        bzero(msg_from_client_c,1024*sizeof(char));
+        if(read(serverChildSocket,&size_msg_from_client_c,sizeof(int))<0)
+        {
+          perror("[server_child]Error read\n");
+        }
+        if(read(serverChildSocket,msg_from_client_c,size_msg_from_client_c)<0)
+        {
+          perror("[server_child]Error at read\n");
+        }
+
+        if(strcmp(msg_from_client_c,"close hexagram")==0)
+        {
+          hexagram_on=0;
+        }
+        }
+        
       }
     }
   

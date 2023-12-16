@@ -200,7 +200,7 @@ int main (int argc, char *argv[])
           valueB[values]='\0';
          
           ///key into map
-          vm_con[keyB]=valueB'
+          vm_con[keyB]=valueB;
         }
         
         
