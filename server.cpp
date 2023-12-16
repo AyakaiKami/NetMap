@@ -1064,7 +1064,7 @@ int insert_vm_info(vm_info vm_in)
 
   char stmt[1024];
   //strcpy(stmt,"insert into table VM_table () values ();",vm_in.name,);
-
+  return 1;
 };
 
 std::map<std::string,std::string> hexagram()
@@ -1103,6 +1103,7 @@ std::map<std::string,std::string> hexagram()
       {
         VMconnections[std::string(list_vm_info[i].name)]=std::string(list_vm_info[j].name);
       }
+  return VMconnections;
 };
 
 int vm_con(vm_info vm1,vm_info vm2)

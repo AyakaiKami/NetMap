@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
   int wpipe[2];///parent writes to child
   int rpipe[2];///parent read from child
 
-  char msg_c_p[1024];int size_msg_c_p;
+  
   int is_window_on=0;
   pid_t pid_window;
   
@@ -115,8 +115,11 @@ int main (int argc, char *argv[])
       perror ("[client_child]Eroare la connect().\n");
       return errno;
     }
-  
+    int is_on=1;
+    while(is_on)
+    {
 
+    }
     close(wpipe[0]);
     close(rpipe[1]);
     exit(EXIT_SUCCESS);
