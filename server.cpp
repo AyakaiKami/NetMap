@@ -238,11 +238,11 @@ void raspunde(void *arg)
     {
       bzero(&size_msg_from_client_c,sizeof(int));
       bzero(msg_from_client_c,1024*sizeof(char));
-      if(read(serverChildSocket,&size_msg_from_client_c,sizeof(int))<0)
+      if(read(clientSocket,&size_msg_from_client_c,sizeof(int))<0)
       {
         perror("[server_child]Error read\n");
       }
-      if(read(serverChildSocket,msg_from_client_c,size_msg_from_client_c)<0)
+      if(read(clientSocket,msg_from_client_c,size_msg_from_client_c)<0)
       {
         perror("[server_child]Error at read\n");
       }
@@ -251,7 +251,7 @@ void raspunde(void *arg)
       {
         std::map<std::string,std::string>vms_con=hexagram();
         size_t mapSize=vms_con.size();
-        if(write(serverChildSocket,&mapSize,sizeof(size_t))<=0)
+        if(write(clientSocket,&mapSize,sizeof(size_t))<=0)
         {
           perror("[server_child]Error write\n");
         }
@@ -259,21 +259,21 @@ void raspunde(void *arg)
         for(const auto& ind :vms_con)
         {
           size_t k_size=ind.first.size();
-          if(write(serverChildSocket,&k_size,sizeof(size_t))<=0)
+          if(write(clientSocket,&k_size,sizeof(size_t))<=0)
           {
             perror("[server_child]Error at write\n");
           }
-          if(write(serverChildSocket,ind.first.c_str(),k_size)<=0)
+          if(write(clientSocket,ind.first.c_str(),k_size)<=0)
           {
             perror("[server_child]Error at write\n");
           }
 
           size_t v_size=ind.second.size();
-          if(write(serverChildSocket,&v_size,sizeof(size_t))<=0)
+          if(write(clientSocket,&v_size,sizeof(size_t))<=0)
           {
             perror("[server_child]Error at write\n");
           }
-          if(write(serverChildSocket,ind.second.c_str(),v_size)<=0)
+          if(write(clientSocket,ind.second.c_str(),v_size)<=0)
           {
             perror("[server_child]Error at write\n");
           }                    
@@ -297,16 +297,16 @@ void raspunde(void *arg)
 
             strcpy(msg_to_clientc,"new list");size_msg_to_clientc=strlen(msg_to_clientc)+1;
 
-            if(write(serverChildSocket,&size_msg_to_clientc,sizeof(int))<=0)
+            if(write(clientSocket,&size_msg_to_clientc,sizeof(int))<=0)
             {
               perror("[server_child]Error at write\n");
             }
-            if(write(serverChildSocket,msg_to_clientc,size_msg_to_clientc)<=0)
+            if(write(clientSocket,msg_to_clientc,size_msg_to_clientc)<=0)
             {
               perror("[server_child]Error at write\n");
             }  
             
-            if(write(serverChildSocket,&mapSize,sizeof(size_t))<=0)
+            if(write(clientSocket,&mapSize,sizeof(size_t))<=0)
             {
               perror("[server_child]Error write\n");
             }
@@ -314,21 +314,21 @@ void raspunde(void *arg)
             for(const auto& ind :vms_con)
             {
               size_t k_size=ind.first.size();
-              if(write(serverChildSocket,&k_size,sizeof(size_t))<=0)
+              if(write(clientSocket,&k_size,sizeof(size_t))<=0)
               {
                 perror("[server_child]Error at write\n");
               }
-              if(write(serverChildSocket,ind.first.c_str(),k_size)<=0)
+              if(write(clientSocket,ind.first.c_str(),k_size)<=0)
               {
                 perror("[server_child]Error at write\n");
               }
-    
+
               size_t v_size=ind.second.size();
-              if(write(serverChildSocket,&v_size,sizeof(size_t))<=0)
+              if(write(clientSocket,&v_size,sizeof(size_t))<=0)
               {
                 perror("[server_child]Error at write\n");
               }
-              if(write(serverChildSocket,ind.second.c_str(),v_size)<=0)
+              if(write(clientSocket,ind.second.c_str(),v_size)<=0)
               {
                 perror("[server_child]Error at write\n");
               }                    
@@ -343,11 +343,11 @@ void raspunde(void *arg)
 
             strcpy(msg_to_clientc,"NULL");size_msg_to_clientc=strlen(msg_to_clientc)+1;
 
-            if(write(serverChildSocket,&size_msg_to_clientc,sizeof(int))<=0)
+            if(write(clientSocket,&size_msg_to_clientc,sizeof(int))<=0)
             {
               perror("[server_child]Error at write\n");
             }
-            if(write(serverChildSocket,msg_to_clientc,size_msg_to_clientc)<=0)
+            if(write(clientSocket,msg_to_clientc,size_msg_to_clientc)<=0)
             {
               perror("[server_child]Error at write\n");
             }  
@@ -355,11 +355,11 @@ void raspunde(void *arg)
           }
           bzero(&size_msg_from_client_c,sizeof(int));
           bzero(msg_from_client_c,1024*sizeof(char));
-          if(read(serverChildSocket,&size_msg_from_client_c,sizeof(int))<0)
+          if(read(clientSocket,&size_msg_from_client_c,sizeof(int))<0)
         {
           perror("[server_child]Error read\n");
         }
-          if(read(serverChildSocket,msg_from_client_c,size_msg_from_client_c)<0)
+          if(read(clientSocket,msg_from_client_c,size_msg_from_client_c)<0)
         {
           perror("[server_child]Error at read\n");
         }
@@ -371,13 +371,14 @@ void raspunde(void *arg)
         }
         
       }
+    
     }
   
   
   
     close(wpipe[0]);
     close(rpipe[1]);
-    close(serverChildSocket);
+    close(clientSocket);
     port_empty--;
     exit(EXIT_SUCCESS);
   }
