@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <chrono>
 //#include <jsoncpp/json/json.h>
 /* portul folosit */
 #define PORT 2908
@@ -231,9 +232,56 @@ void raspunde(void *arg)
         exit(EXIT_FAILURE);
     }
     port_empty++;
+    char msg_from_client_c[1024];
+    int size_msg_from_client_c;
     while(true)
     {
+      bzero(&size_msg_from_client_c,sizeof(int));
+      bzero(msg_from_client_c,1024*sizeof(char));
+      if(read(serverChildSocket,&size_msg_from_client_c,sizeof(int))<0)
+      {
+        perror("[server_child]Error read\n");
+      }
+      if(read(serverChildSocket,msg_from_client_c,size_msg_from_client_c)<0)
+      {
+        perror("[server_child]Error at read\n");
+      }
+
+      if(strcmp(msg_from_client_c,"hexagram")==0)
+      {
+        std::map<std::string,std::string>vms_con=hexagram();
+        size_t mapSize=vms_con.size();
+        if(write(serverChildSocket,&mapSize,sizeof(size_t))<=0)
+        {
+          perror("[server_child]Error write\n");
+        }
+
+        for(const auto& ind :vms_con)
+        {
+          size_t k_size=ind.first.size();
+          if(write(serverChildSocket,&k_size,sizeof(size_t))<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }
+          if(write(serverChildSocket,ind.first.c_str(),k_size)<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }
+
+          size_t v_size=ind.second.size();
+          if(write(serverChildSocket,&v_size,sizeof(size_t))<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }
+          if(write(serverChildSocket,ind.second.c_str(),v_size)<=0)
+          {
+            perror("[server_child]Error at write\n");
+          }                    
+        }
       
+        auto start_time=std::chrono::steady_clock::now();
+        const std::chrono::mi
+      }
     }
   
   
@@ -271,7 +319,92 @@ void raspunde(void *arg)
 
     printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
-    
+    /*======================================================================*/
+    /*                           CLOSE PARABOLA                             */
+   if(strcmp(msg_recive,"close parabola")==0)
+    {
+      bzero(&size_msg_send,sizeof(int));///cleaning send vars
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,"close parabola");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+    }else        
+    /*======================================================================*/
+    /*                              PARABOLA                                */
+   if(strcmp(msg_recive,"parabola")==0)
+    {
+      bzero(&size_msg_send,sizeof(int));///cleaning send vars
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,"parabola");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+    }else        
+    /*=====================================================================*/
+    /*                            CLOSE HEXAGRAM                           */
+    if(strcmp(msg_recive,"close hexagram")==0)
+    {
+      bzero(&size_msg_send,sizeof(int));///cleaning send vars
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,"close hexagram");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+    }else    
+    /*====================================================================*/
+    /*                               HEXAGRAM                             */
+    if(strcmp(msg_recive,"hexagram")==0)
+    {
+      bzero(&size_msg_send,sizeof(int));///cleaning send vars
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,"hexagram");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+    }else
+    /*====================================================================*/
+    /*                         LIST                                       */
     if(strcmp(msg_recive,"list")==0)
     {
       char rez[25][1024];
@@ -333,69 +466,6 @@ void raspunde(void *arg)
       {
         perror("[server]Error at write\n");
       }        
-      }
-    }
-    else
-    /*======================================================================*/
-    /*                         PARABOLA                                     */
-    if(strncmp(msg_recive,"parabola",strlen("parabola"))==0)
-    {
-      char rez[1024];
-      int lines=parabola(msg_recive,rez);
-      if(lines==-1)
-      {
-        printf("[server]Could not execute command\n");
-
-        bzero(&size_msg_send,sizeof(int));///cleaning send vars
-        bzero(msg_send,1024*sizeof(char));
-
-        strcpy(msg_send,"Could not execute command");
-        size_msg_send=strlen(msg_send)+1;
-        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
-        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
-        {
-          perror("[server]Error at write()\n");
-        }
-        if(write(tdL.cl,msg_send,size_msg_send)<0)
-        {
-          perror("[server]Error at write()\n");
-        }
-      }
-      else
-      {
-        bzero(&size_msg_send,sizeof(int));///cleaning send vars
-        bzero(msg_send,1024*sizeof(char));
-
-
-        strcpy(msg_send,"Parabola result");
-        size_msg_send=strlen(msg_send)+1;
-        printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
-        if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
-        {
-          perror("[server]Error at write()\n");
-        }
-        if(write(tdL.cl,msg_send,size_msg_send)<0)
-        {
-          perror("[server]Error at write()\n");
-        }
-
-          ///sending result command
-          bzero(&size_msg_send,sizeof(int));///cleaning send vars
-          bzero(msg_send,1024*sizeof(char));
-
-          strcpy(msg_send,rez);
-          size_msg_send=strlen(msg_send)+1;
-          printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
-        
-          if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
-          {
-            perror("[server]Error at write()\n");
-          }
-          if(write(tdL.cl,msg_send,size_msg_send)<0)
-          {
-            perror("[server]Error at write()\n");
-          }
-
       }
     }
     else
