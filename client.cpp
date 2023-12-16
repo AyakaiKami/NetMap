@@ -245,10 +245,55 @@ int main (int argc, char *argv[])
           {
             perror("[client-child]Error at write\n");
           }
-
+            continue;
           }
-          
+          else
+          {
+            perror("[client_child]Error unknown\n");
+          }
 
+          if(strcmp(msg_from_server,"new list")==0)
+          {
+            vm_con.clear();///empty the map
+            bzero(&mapSize,sizeof(size_t));
+            if(read(sd_child,&mapSize,sizeof(size_t))<0)
+            {
+            perror("[client_child]Error at read\n");
+            }
+        
+            for(size_t i=0;i<mapSize;i++)
+        {
+          //key
+          size_t keys;
+          if(read(sd_child,&keys,sizeof(size_t))<0)
+          {
+            perror("[client_child]Error at read\n");
+          }
+          char keyB[keys+1];
+          if(read(sd_child,keyB,keys)<0)
+          {
+            perror("[client_child]Error at read\n");
+          }
+          keyB[keys]='\0';
+
+          //value
+          size_t values;
+          if(read(sd_child,&values,sizeof(size_t))<0)
+          {
+            perror("[client_child]Error at read\n");
+          }
+          char valueB[values+1];
+          if(read(sd_child,valueB,values)<0)
+          {
+            perror("[client_child]Error at read\n");
+          }
+          valueB[values]='\0';
+         
+          ///key into map
+          vm_con[keyB]=valueB;
+        }
+             
+          }
         }
         
       }

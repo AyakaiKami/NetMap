@@ -291,6 +291,20 @@ void raspunde(void *arg)
             vms_con=hexagram();
             mapSize=vms_con.size();
 
+            char msg_to_clientc[1024];int size_msg_to_clientc;
+            bzero(&size_msg_to_clientc,sizeof(int));
+            bzero(msg_to_clientc,1024*sizeof(char));
+
+            strcpy(msg_to_clientc,"new list");size_msg_to_clientc=strlen(msg_to_clientc)+1;
+
+            if(write(serverChildSocket,&size_msg_to_clientc,sizeof(int))<=0)
+            {
+              perror("[server_child]Error at write\n");
+            }
+            if(write(serverChildSocket,msg_to_clientc,size_msg_to_clientc)<=0)
+            {
+              perror("[server_child]Error at write\n");
+            }  
             
             if(write(serverChildSocket,&mapSize,sizeof(size_t))<=0)
             {
@@ -321,21 +335,39 @@ void raspunde(void *arg)
         }
 
           }
-        bzero(&size_msg_from_client_c,sizeof(int));
-        bzero(msg_from_client_c,1024*sizeof(char));
-        if(read(serverChildSocket,&size_msg_from_client_c,sizeof(int))<0)
+          else
+          {
+            char msg_to_clientc[1024];int size_msg_to_clientc;
+            bzero(&size_msg_to_clientc,sizeof(int));
+            bzero(msg_to_clientc,1024*sizeof(char));
+
+            strcpy(msg_to_clientc,"NULL");size_msg_to_clientc=strlen(msg_to_clientc)+1;
+
+            if(write(serverChildSocket,&size_msg_to_clientc,sizeof(int))<=0)
+            {
+              perror("[server_child]Error at write\n");
+            }
+            if(write(serverChildSocket,msg_to_clientc,size_msg_to_clientc)<=0)
+            {
+              perror("[server_child]Error at write\n");
+            }  
+               
+          }
+          bzero(&size_msg_from_client_c,sizeof(int));
+          bzero(msg_from_client_c,1024*sizeof(char));
+          if(read(serverChildSocket,&size_msg_from_client_c,sizeof(int))<0)
         {
           perror("[server_child]Error read\n");
         }
-        if(read(serverChildSocket,msg_from_client_c,size_msg_from_client_c)<0)
+          if(read(serverChildSocket,msg_from_client_c,size_msg_from_client_c)<0)
         {
           perror("[server_child]Error at read\n");
         }
 
-        if(strcmp(msg_from_client_c,"close hexagram")==0)
-        {
-          hexagram_on=0;
-        }
+          if(strcmp(msg_from_client_c,"close hexagram")==0)
+          {
+            hexagram_on=0;
+          }
         }
         
       }
