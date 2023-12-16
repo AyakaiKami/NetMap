@@ -312,27 +312,27 @@ void raspunde(void *arg)
             }
 
             for(const auto& ind :vms_con)
-        {
-          size_t k_size=ind.first.size();
-          if(write(serverChildSocket,&k_size,sizeof(size_t))<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }
-          if(write(serverChildSocket,ind.first.c_str(),k_size)<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }
-
-          size_t v_size=ind.second.size();
-          if(write(serverChildSocket,&v_size,sizeof(size_t))<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }
-          if(write(serverChildSocket,ind.second.c_str(),v_size)<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }                    
-        }
+            {
+              size_t k_size=ind.first.size();
+              if(write(serverChildSocket,&k_size,sizeof(size_t))<=0)
+              {
+                perror("[server_child]Error at write\n");
+              }
+              if(write(serverChildSocket,ind.first.c_str(),k_size)<=0)
+              {
+                perror("[server_child]Error at write\n");
+              }
+    
+              size_t v_size=ind.second.size();
+              if(write(serverChildSocket,&v_size,sizeof(size_t))<=0)
+              {
+                perror("[server_child]Error at write\n");
+              }
+              if(write(serverChildSocket,ind.second.c_str(),v_size)<=0)
+              {
+                perror("[server_child]Error at write\n");
+              }                    
+            }
 
           }
           else
