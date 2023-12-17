@@ -78,7 +78,7 @@ struct vm_info
 struct Tree_vms
 {
   char name[256];
-  std::vector<Tree_vms*>connections;
+  std::vector<Tree_vms*>*connections;
 };
 
 std::vector<Tree_vms*>* hexagram();
@@ -93,9 +93,14 @@ int list_vms(char Rez[25][1024]);
 
 int vm_con(vm_info vm1,vm_info vm2);////are 2 vm s connected?
 
-int sendTreeList(int fd,std::vector<Tree_vms*>&list);
+int sendTreeList(int fd,std::vector<Tree_vms*>*list);
+
+
 int sendTree(int fd,Tree_vms*tree);
+
+
 ///====================================START==============================================================
+
 int main ()
 {
   struct sockaddr_in server;	// structura folosita de server
@@ -298,6 +303,9 @@ void raspunde(void *arg)
         sleep(1);
         int hon=1;
         std::vector<Tree_vms*>*listT=hexagram();
+        sendTreeList(clientSocket,listT);
+  
+        
         while (hon)
         {
           
@@ -1105,12 +1113,12 @@ Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::
   while(strcmp(list_vm_info[i]->name,current_vm.name)!=0)
     i++;
   marked_list[i]=1;
-
+  node->connections=new std::vector<Tree_vms*>();
   for(int i=0;i<list_vm_info.size();i++)
   {
     if(marked_list[i]==0 && vm_con(*list_vm_info[i],current_vm)==1)
     {
-      node->connections.push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
+      node->connections->push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
     }
   }
   return node;
@@ -1133,17 +1141,17 @@ int vm_con(vm_info vm1,vm_info vm2)
   return 1;
 };
 
-int sendTreeList(int fd,std::vector<Tree_vms*>&list)
+int sendTreeList(int fd,std::vector<Tree_vms*>*list)
 {
-  int lsize=list.size();
+  int lsize=list->size();
   if(write(fd,&lsize,sizeof(int))<=0)
   {
     perror("[server_child]Error at write\n");
     return -1;
   }
-  for(int i=0;i<list.size();i++)
+  for(int i=0;i<list->size();i++)
   {
-    if(sendTree(fd,list[i])==-1)
+    if(sendTree(fd,list->at(i))==-1)
       return -1;
   }
   return 1;
@@ -1166,15 +1174,15 @@ int sendTree(int fd,Tree_vms*tree)
     return -1;
   }
   
-  int size_con;bzero(&size_con,sizeof(int));size_con=tree->connections.size();
+  int size_con;bzero(&size_con,sizeof(int));size_con=tree->connections->size();
   if(write(fd,&size_con,sizeof(int))<=0)
   {
     return -1;
   }
   
-  for(int i=0;i<tree->connections.size();i++)
+  for(int i=0;i<tree->connections->size();i++)
   {
-    sendTree(fd,tree->connections[i]);
+    sendTree(fd,tree->connections->at(i));
   }
   return 1;
 }

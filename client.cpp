@@ -3,6 +3,7 @@
          
    Autor: Lenuta Alboaie  <adria@info.uaic.ro> (c)
 */
+#include <math.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,6 +20,8 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <math.h>
+#include <algorithm>
+#include <iostream>
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
@@ -28,13 +31,16 @@ int port;
 struct Tree_vms
 {
   char name[256];
-  std::vector<Tree_vms*>connections;
+  std::vector<Tree_vms*>*connections;
 };
 
-std::vector<Tree_vms*>getTreeList(int fd);
+std::vector<Tree_vms*>*getTreeList(int fd);
 Tree_vms*getTree(int fd);
-void GraphDraw(sf::RenderWindow &window,Tree_vms* tree,int sx,int fx,int height);
-void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>con,int sx,int fx,int height);
+
+//void GraphDraw(sf::RenderWindow &window,Tree_vms* tree,int sx,int fx,int height);
+void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>*con,int x);
+void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float xOffset, float levelOffset);
+
 int main (int argc, char *argv[])
 {
   int sd;			// descriptorul de socket
@@ -183,11 +189,15 @@ int main (int argc, char *argv[])
       {
         printf("Opening Hexagram\n");
         int hon=1;
-        
-        /*while (hon)
+        std::vector<Tree_vms*>*list=getTreeList(sd_child);
+        sf::RenderWindow window(sf::VideoMode(1200,800),"Hexagram");
+        window.clear();
+        GraphDrawList(window,list,1200);
+        window.display();
+        while (hon && window.isOpen())
         {
           
-        }*/
+        }
         
       }
 
@@ -239,7 +249,7 @@ int main (int argc, char *argv[])
     }
     msg_send[strlen(msg_send)-1]='\0';
     size_msg_send=strlen(msg_send)+1;
-    printf("[client]Sending %s of size %d\n",msg_send,size_msg_send);
+    ///printf("[client]Sending %s of size %d\n",msg_send,size_msg_send);
     
     if(write(sd,&size_msg_send,sizeof(int))<0)///sending size of msg
     {
@@ -262,7 +272,7 @@ int main (int argc, char *argv[])
       perror("[client]Error at read()\n");
     }
 
-    printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
+    //printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
     /*==================================================================*/
     /*                           CLOSE PARABOLA                         */
@@ -502,12 +512,13 @@ int main (int argc, char *argv[])
   close(rpipe[0]);
   /* inchidem conexiunea, am terminat */
   close (sd);
+  return 1;
 };
 
 
-std::vector<Tree_vms*>getTreeList(int fd)
+std::vector<Tree_vms*>*getTreeList(int fd)
 {
-  std::vector<Tree_vms*>listTrees;
+  std::vector<Tree_vms*>*listTrees=new std::vector<Tree_vms*>();
   int size_list;bzero(&size_list,sizeof(int));
   if(read(fd,&size_list,sizeof(int))<0)
   {
@@ -516,7 +527,7 @@ std::vector<Tree_vms*>getTreeList(int fd)
   
   for(int i=0;i<size_list;i++)
   {
-    listTrees.push_back(getTree(fd));
+    listTrees->push_back(getTree(fd));
   }
   return listTrees;
 };
@@ -543,56 +554,64 @@ Tree_vms*getTree(int fd)
   {
     perror("[client_child]Error at read\n");
   }
-  
+  tree->connections=new std::vector<Tree_vms*>();
   for(int i=0;i<size_con;i++)
   {
-    tree->connections.push_back(getTree(fd));
+    tree->connections->push_back(getTree(fd));
   }
   return tree;
 }
 
-void GraphDraw(sf::RenderWindow &window,Tree_vms* tree,int sx,int fx,int height)
+void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float xOffset, float levelOffset) 
 {
-  sf::CircleShape circle(50);
-  circle.setPosition(sx+fx/2,height);
-  circle.setFillColor(sf::Color::White);
-  sf::Font font;
-  if(!font.loadFromFile("Basic-Regular.ttf"))
-  {
-    perror("[client_child]Failed to get font\n");
-    exit(EXIT_FAILURE);
-  }
-  sf::Text text(tree->name,font,10);
-  text.setPosition(sx+fx/2-strlen(tree->name),height);text.setFillColor(sf::Color::Black);
-  window.draw(circle);window.draw(text);
-  int sp=(fx-sx)/tree->connections.size();
-  for(int i=0;i<tree->connections.size();i++)
-  {
-    sf::Vector2f center1 = sf::Vector2f(sx + fx / 2, height + circle.getRadius());
-    sf::Vector2f center2 = sf::Vector2f(sx + sp * i + sp / 2 + circle.getRadius(), height);
+    if (tree == nullptr) {
+        return;
+    }
 
-    sf::Vector2f direction = center2 - center1;
-    float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+    // Draw the circle
+    sf::CircleShape circle(25);
+    circle.setPosition(x - circle.getRadius(), y - circle.getRadius());
+    circle.setFillColor(sf::Color::White);
+    circle.setOutlineThickness(2);
+    circle.setOutlineColor(sf::Color::Black);
+    window.draw(circle);
 
-    sf::Vector2f unitDirection = direction / distance;
+    // Draw the text inside the circle
+    sf::Font font;
+    if (!font.loadFromFile("Basic-Regular.ttf")) {
+        std::cerr << "Failed to load font\n";
+        return;
+    }
 
-    sf::Vector2f pointOnCircle1 = center1 + circle.getRadius() * unitDirection;
-    sf::Vector2f pointOnCircle2 = center2 - circle.getRadius() * unitDirection;
+    sf::Text text(tree->name, font, 12);
+    sf::FloatRect textBounds = text.getLocalBounds();
+    text.setPosition(x - textBounds.width / 2.0f, y - textBounds.height / 2.0f);
+    text.setFillColor(sf::Color::Black);
+    window.draw(text);
 
-    sf::Vertex line[] = {
-            sf::Vertex(pointOnCircle1),
-            sf::Vertex(pointOnCircle2)
-    };
-    window.draw(line, 2, sf::Lines);
-    GraphDraw(window,tree->connections[i],sx+sp*i,sx+sp*(i+1),height+150);
-  }
-};
-void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>con,int sx,int fx,int height)
+    // Draw lines to connections
+    float sp = xOffset / std::max(1, static_cast<int>(tree->connections->size()));
+    for (size_t i = 0; i < tree->connections->size(); i++) {
+        float xConnection = x - xOffset + sp * i + sp / 2.0f;
+        float yConnection = y + levelOffset;
+        sf::Vertex line[] = {sf::Vertex(sf::Vector2f(x, y + circle.getRadius())), sf::Vertex(sf::Vector2f(xConnection, yConnection))};
+        window.draw(line, 2, sf::Lines);
+
+        GraphDraw(window, tree->connections->at(i), xConnection, yConnection, xOffset * 0.5f, levelOffset * 1.5f);
+    }
+}
+
+void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>*con,int x) 
 {
-  int sp=(fx-sx)/con.size();
-
-  for(int i=0;i<con.size();i++)
-  {
-    GraphDraw(window,con.at(i),sx+sp*i,sx+sp*(i+1),height);
-  }
-};
+  int sp=0;
+    if(con->size()<0)
+    {
+      sp=x/(con->size()+1);
+      printf("x : %d , sp : %d",x,sp);
+      for (int i = 0; i < con->size(); i++) 
+      {
+        printf("%d : %s at x : %d\n",i,con->at(i)->name,sp*(i+1));
+        GraphDraw(window, con->at(i), sp * (i+1),50,200,100);
+      }
+    }
+}
