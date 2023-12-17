@@ -264,6 +264,32 @@ void raspunde(void *arg)
         exit(EXIT_FAILURE);
     }
     printf("Connected child\n");
+    /*=============================================================================*/
+    /*                             Child Connected                                 */
+    int on=1;
+    int size_msg_client_child;
+    char msg_client_child[1024];
+    while (on)
+    {
+      bzero(&size_msg_client_child,sizeof(int));
+      bzero(msg_client_child,1024*sizeof(char));
+
+      if(read(clientSocket,&size_msg_client_child,sizeof(int))<=0)
+      {
+        perror("[server_child]Read \n");
+        close(clientSocket);
+        exit(EXIT_FAILURE);
+      }
+      if(read(clientSocket,msg_client_child,size_msg_client_child)<=0)
+      {
+        perror("[server_child]Read \n");
+        close(clientSocket);
+        exit(EXIT_FAILURE);
+      }
+
+      printf("[server_child]Got %s of size %d from client_child\n",msg_client_child,size_msg_client_child);
+
+    }
     
     close(wpipe[0]);
     close(rpipe[1]);

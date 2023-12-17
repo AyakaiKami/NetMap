@@ -131,6 +131,40 @@ int main (int argc, char *argv[])
       return errno;
     }
     printf("[client_child]Connected\n");
+    /*==========================================================================*/
+    /*                                 Child Connected                          */
+    int on=1;
+    int size_msg_server_child;
+    char msg_server_child[1024];
+    while (on)
+    {
+      ///clear vars
+      bzero(&size_msg_server_child,sizeof(int));
+      bzero(msg_server_child,1024*sizeof(char));
+
+      ///get data from parrent
+      if(read(wpipe[0],&size_msg_server_child,sizeof(int))<=0)
+      {
+        perror("[client_child]Error read\n");
+      }
+      if(read(wpipe[0],msg_server_child,size_msg_server_child)<=0)
+      {
+        perror("[client_child]Error read\n");
+      }     
+      printf("[client_child]Got %s of size %d from parrent\n",msg_server_child,size_msg_server_child);
+      //send data to server_child
+      if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
+      {
+        perror("[client_child]Error write\n");
+      }
+      if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
+      {
+        perror("[client_child]Error write\n");
+      }
+      printf("[client_child]Sent %s of size %d to server_child\n",msg_server_child,size_msg_server_child);
+      sleep(5);
+    }
+    
     close(wpipe[0]);
     close(rpipe[1]);
     close(sd_child);
@@ -160,20 +194,6 @@ int main (int argc, char *argv[])
   int size_msg_to_child;
   while(is_open)
   {
-    ///null to child
-    /*bzero(&size_msg_to_child,sizeof(int));
-    bzero(msg_to_child,1024*sizeof(char));
-    strcpy(msg_to_child,"NULL");
-    size_msg_to_child=strlen(msg_to_child)+1;
-    if(write(wpipe[1],&size_msg_to_child,sizeof(int))<=0)
-    {
-      perror("[client]Error at write\n");
-    }
-    if(write(wpipe[1],msg_to_child,size_msg_to_child)<=0)
-    {
-      perror("[client]Error at write\n");
-    }
-*/
     ///to server
     printf("Waiting command : ");
     fflush(stdout);
@@ -196,7 +216,6 @@ int main (int argc, char *argv[])
     {
       perror("[client]Error at write()\n");
     }
-
 
     bzero(&size_msg_recive,sizeof(int));///cleaning output vars
     bzero(msg_recive,1024*sizeof(char));
