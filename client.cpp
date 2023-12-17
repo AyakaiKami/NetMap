@@ -96,11 +96,12 @@ int main (int argc, char *argv[])
   {
     exit(EXIT_FAILURE);
   }
+  /*=================================================================*/
+  /*                              CHILD                              */
   if(pid_window==0)///child
   {
     close(wpipe[1]);////child cant write with this pipe
     close(rpipe[0]);////child cant read with this pipe
-    sleep(1);
     ////new connection to the client child
   
     int sd_child;
@@ -123,137 +124,18 @@ int main (int argc, char *argv[])
     server_child.sin_family=AF_INET;
     server_child.sin_addr.s_addr=inet_addr(argv[1]);
     server_child.sin_port=htons(port_c);
-
+    printf("[client_child]Connecting on port %d\n",port_c);
     if (connect (sd_child, (struct sockaddr *) &server_child,sizeof (struct sockaddr)) == -1)
     {
       perror ("[client_child]Eroare la connect().\n");
       return errno;
     }
-    printf("pls");
-
-    int is_on=1;
-    char msg_from_parent[1024];
-    int size_msg_from_parent;
-
-    char msg_from_server[1024];
-    int size_msg_from_server;
-    char msg_to_server[1024];
-    int size_msg_to_server;
-    while(is_on)
-    {
-      printf("pls");
-      bzero(&size_msg_from_parent,sizeof(int));
-      bzero(msg_from_parent,1024*sizeof(char));
-      if(read(wpipe[0],&size_msg_from_parent,sizeof(int))<0)
-      {
-        perror("[client_child]Could not get size of msg\n");
-      }
-      if(read(wpipe[0],msg_from_parent,size_msg_from_parent)<0)
-      {
-        perror("[client_child]Could not get msg\n");
-      }
-    
-      if(strcmp(msg_from_parent,"close hexagram")==0)
-      {
-        printf("[client_child]Hexagram not open\n");
-      }
-
-      if(strcmp(msg_from_parent,"close parabola")==0)
-      {
-        printf("[client_child]Parabola not open\n");
-      }
-      if(strcmp(msg_from_parent,"hexagram")==0)
-      {
-        int hexagram_on=1;
-        printf("pls");
-        bzero(&size_msg_to_server,sizeof(int));
-        bzero(msg_to_server,1024);
-        strcpy(msg_to_server,"hexagram");
-        size_msg_to_server=strlen(msg_to_server)+1;
-        if(write(sd_child,&size_msg_to_server,sizeof(int))<=0)
-        {
-          perror("[client_child]Error write\n");
-        }
-        if(write(sd_child,msg_to_server,size_msg_to_server)<=0)
-        {
-          perror("[client-child]Error at write\n");
-        }
-
-        std::vector<Tree_vms*>vm_con;
-        printf("pls");
-        vm_con=getTreeList(sd_child);
-        sf::RenderWindow window(sf::VideoMode(1200,800),"Hexagram");
-        GraphDrawList(window,vm_con,0,1200,800);
-        while (hexagram_on )
-        {
-          ///from parent
-          bzero(&size_msg_from_parent,sizeof(int));
-          bzero(msg_from_parent,1024*sizeof(char));          
-          if(read(wpipe[0],&size_msg_from_parent,sizeof(int))<0)
-          {
-            perror("[client-child]Could note get size of msg\n");
-          }
-          if(read(wpipe[0],msg_from_parent,size_msg_from_parent)<0)
-          {
-            perror("[client-child]Could not get msg\n");
-          }
-        
-          ///from server
-          bzero(&size_msg_from_server,sizeof(int));
-          bzero(msg_from_server,1024*sizeof(char));          
-          if(read(sd_child,&size_msg_from_server,sizeof(int))<0)
-          {
-            perror("[client_child]Could not obtain size of msg\n");
-          }
-          if(read(sd_child,msg_from_server,size_msg_from_server)<0)
-          {
-            perror("[client_child]Could not obtain msg\n");
-          }
-        
-          if(strcmp(msg_from_parent,"close hexagram")==0)
-          {
-            hexagram_on=0;
-            bzero(&size_msg_to_server,sizeof(int));
-            bzero(msg_to_server,1024);
-            strcpy(msg_to_server,"close hexagram");
-            size_msg_to_server=strlen(msg_to_server)+1;
-            if(write(sd_child,&size_msg_to_server,sizeof(int))<=0)
-          {
-            perror("[client_child]Error write\n");
-          }
-            if(write(sd_child,msg_to_server,size_msg_to_server)<=0)
-          {
-            perror("[client-child]Error at write\n");
-          }
-            window.close();
-            fflush((FILE*)sd_child);
-            continue;
-          }
-          else
-          if(strcmp(msg_from_server,"NULL"))
-          {
-            perror("[client_child]Error unknown\n");
-          }
-
-          if(strcmp(msg_from_server,"new list")==0)
-          {
-            vm_con.clear();///empty the map
-            vm_con=getTreeList(sd_child);
-            window.clear();
-            GraphDrawList(window,vm_con,0,1200,800);
-          }
-        }
-        
-      }
-    
-
-    }
+    printf("[client_child]Connected\n");
     close(wpipe[0]);
     close(rpipe[1]);
     close(sd_child);
     exit(EXIT_SUCCESS);
   }
-  
   
   
   /*==============================PARENT==================================*/
@@ -279,7 +161,7 @@ int main (int argc, char *argv[])
   while(is_open)
   {
     ///null to child
-    bzero(&size_msg_to_child,sizeof(int));
+    /*bzero(&size_msg_to_child,sizeof(int));
     bzero(msg_to_child,1024*sizeof(char));
     strcpy(msg_to_child,"NULL");
     size_msg_to_child=strlen(msg_to_child)+1;
@@ -291,7 +173,7 @@ int main (int argc, char *argv[])
     {
       perror("[client]Error at write\n");
     }
-
+*/
     ///to server
     printf("Waiting command : ");
     fflush(stdout);

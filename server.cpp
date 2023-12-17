@@ -234,7 +234,6 @@ void raspunde(void *arg)
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = INADDR_ANY;
     serverAddress.sin_port = htons(port_empty);
-
     if (bind(serverChildSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) 
     {
       printf("Error binding socket\n");
@@ -243,7 +242,8 @@ void raspunde(void *arg)
       close(rpipe[1]);
       exit(EXIT_FAILURE);
     }
-  
+
+    printf("[server_child]Waiting at port %d\n",port_empty);
     if (listen(serverChildSocket, 5) == -1) 
     { 
       printf("Error listening for child client connections\n");
@@ -263,102 +263,8 @@ void raspunde(void *arg)
         close(rpipe[1]);
         exit(EXIT_FAILURE);
     }
-    char msg_from_client_c[1024];
-    int size_msg_from_client_c;
-    while(true)
-    {
-      bzero(&size_msg_from_client_c,sizeof(int));
-      bzero(msg_from_client_c,1024*sizeof(char));
-      if(read(clientSocket,&size_msg_from_client_c,sizeof(int))<0)
-      {
-        perror("[server_child]Error read\n");
-      }
-      if(read(clientSocket,msg_from_client_c,size_msg_from_client_c)<0)
-      {
-        perror("[server_child]Error at read\n");
-      }
-
-      if(strcmp(msg_from_client_c,"hexagram")==0)
-      {
-        std::vector<Tree_vms*>vms_con=hexagram();
-        printf("pls");
-        ///send tree
-        if(sendTreeList(clientSocket,vms_con)==-1)
-        {
-          perror("[server_child]Error sending tree\n");
-        }
-        
-        auto start_time=std::chrono::steady_clock::now();
-        int hexagram_on=1;
-        while (hexagram_on)
-        {
-          auto current_time=std::chrono::steady_clock::now();
-          auto dif_minutes = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
-        
-          if(dif_minutes>=60*2)
-          {
-            vms_con=hexagram();
-
-            char msg_to_clientc[1024];int size_msg_to_clientc;
-            bzero(&size_msg_to_clientc,sizeof(int));
-            bzero(msg_to_clientc,1024*sizeof(char));
-
-            strcpy(msg_to_clientc,"new list");size_msg_to_clientc=strlen(msg_to_clientc)+1;
-
-            if(write(clientSocket,&size_msg_to_clientc,sizeof(int))<=0)
-            {
-              perror("[server_child]Error at write\n");
-            }
-            if(write(clientSocket,msg_to_clientc,size_msg_to_clientc)<=0)
-            {
-              perror("[server_child]Error at write\n");
-            }  
-            
-            ///send new list
-
-          }
-          else
-          {
-            char msg_to_clientc[1024];int size_msg_to_clientc;
-            bzero(&size_msg_to_clientc,sizeof(int));
-            bzero(msg_to_clientc,1024*sizeof(char));
-
-            strcpy(msg_to_clientc,"NULL");size_msg_to_clientc=strlen(msg_to_clientc)+1;
-
-            if(write(clientSocket,&size_msg_to_clientc,sizeof(int))<=0)
-            {
-              perror("[server_child]Error at write\n");
-            }
-            if(write(clientSocket,msg_to_clientc,size_msg_to_clientc)<=0)
-            {
-              perror("[server_child]Error at write\n");
-            }  
-               
-          }
-          bzero(&size_msg_from_client_c,sizeof(int));
-          bzero(msg_from_client_c,1024*sizeof(char));
-          if(read(clientSocket,&size_msg_from_client_c,sizeof(int))<0)
-        {
-          perror("[server_child]Error read\n");
-        }
-          if(read(clientSocket,msg_from_client_c,size_msg_from_client_c)<0)
-        {
-          perror("[server_child]Error at read\n");
-        }
-
-          if(strcmp(msg_from_client_c,"close hexagram")==0)
-          {
-            hexagram_on=0;
-            fflush((FILE*)clientSocket);
-          }
-        }
-        
-      }
+    printf("Connected child\n");
     
-    }
-  
-  
-  
     close(wpipe[0]);
     close(rpipe[1]);
     close(clientSocket);
@@ -374,7 +280,6 @@ void raspunde(void *arg)
   {
     perror("[server]Error sending port\n");
   }
-
   while(is_open)
   {
     printf("[server]Waitting for input on thread : %d \n",tdL.idThread);
