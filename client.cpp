@@ -32,7 +32,8 @@ struct Tree_vms
 
 std::vector<Tree_vms*>getTreeList(int fd);
 Tree_vms*getTree(int fd);
-
+void GraphDraw(sf::RenderWindow &window,Tree_vms* tree,int sx,int fx,int height);
+void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>con,int sx,int fx,int height);
 int main (int argc, char *argv[])
 {
   int sd;			// descriptorul de socket
@@ -176,7 +177,7 @@ int main (int argc, char *argv[])
         std::vector<Tree_vms*>vm_con;
         vm_con=getTreeList(sd_child);
         sf::RenderWindow window(sf::VideoMode(1200,800),"Hexagram");
-
+        GraphDraw(window);
         while (hexagram_on )
         {
           ///from parent
@@ -219,9 +220,11 @@ int main (int argc, char *argv[])
             perror("[client-child]Error at write\n");
           }
             window.close();
+            fflush((FILE*)sd_child);
             continue;
           }
           else
+          if(strcmp(msg_from_server,"NULL"))
           {
             perror("[client_child]Error unknown\n");
           }
@@ -231,6 +234,7 @@ int main (int argc, char *argv[])
             vm_con.clear();///empty the map
             vm_con=getTreeList(sd_child);
             window.clear();
+            GraphDraw(window);
           }
         }
         
@@ -591,3 +595,11 @@ Tree_vms*getTree(int fd)
   return tree;
 }
 
+void GraphDraw(sf::RenderWindow &window,Tree_vms* tree,int sx,int fx,int height)
+{
+  
+};
+void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>con,int sx,int fx,int height)
+{
+
+};

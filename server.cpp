@@ -326,6 +326,7 @@ void raspunde(void *arg)
           if(strcmp(msg_from_client_c,"close hexagram")==0)
           {
             hexagram_on=0;
+            fflush((FILE*)clientSocket);
           }
         }
         
