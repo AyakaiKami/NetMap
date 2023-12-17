@@ -58,7 +58,7 @@ struct Tree_vms
   std::vector<Tree_vms*>connections;
 };
 std::vector<Tree_vms*> hexagram();
-Tree_vms makeGraph(vm_info &current_vm,std::vector<vm_info>&list_vm_info,std::vector<int>&marked_list);
+Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info>&list_vm_info,std::vector<int>&marked_list);
 vm_info vm_data_make(virDomainPtr vm);
 int parabola(char msg_recive[1024],char Rez[1024]);
 
@@ -67,6 +67,7 @@ int list_vms(char Rez[25][1024]);
 int vm_con(vm_info vm1,vm_info vm2);////are 2 vm s connected?
 
 int sendTreeList(int fd,std::vector<Tree_vms*>&list);
+int sendTree(int fd,Tree_vms*tree);
 ///====================================START==============================================================
 int main ()
 {
@@ -259,7 +260,7 @@ void raspunde(void *arg)
         std::vector<Tree_vms*>vms_con=hexagram();
 
         ///send tree
-        if(sendTreeList()==-1)
+        if(sendTreeList(clientSocket,vms_con)==-1)
         {
           perror("[server_child]Error sending tree\n");
         }
@@ -1263,10 +1264,50 @@ int vm_con(vm_info vm1,vm_info vm2)
     index++;
   }
   return 1;
-}
+};
 
 int sendTreeList(int fd,std::vector<Tree_vms*>&list)
 {
+  int lsize=list.size();
+  if(write(fd,&lsize,sizeof(int))<=0)
+  {
+    perror("[server_child]Error at write\n");
+    return -1;
+  }
+  for(int i=0;i<list.size();i++)
+  {
+    if(sendTree(fd,list[i])==-1)
+      return -1;
+  }
+  return 1;
+};
 
+
+int sendTree(int fd,Tree_vms*tree)
+{
+  char name[1024];int name_size;
+  bzero(name,1024*sizeof(char));bzero(&name_size,sizeof(int));
+  strcpy(name,tree->name);
+  name_size=strlen(name)+1;
+
+  if(write(fd,&name_size,sizeof(int))<=0)
+  {
+    return -1;
+  }
+  if(write(fd,name,name_size)<=0)
+  {
+    return -1;
+  }
+  
+  int size_con;bzero(&size_con,sizeof(int));size_con=tree->connections.size();
+  if(write(fd,&size_con,sizeof(int))<=0)
+  {
+    return -1;
+  }
+  
+  for(int i=0;i<tree->connections.size();i++)
+  {
+    sendTree(fd,tree->connections[i]);
+  }
   return 1;
 }

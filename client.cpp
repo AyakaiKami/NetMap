@@ -17,25 +17,21 @@
 #include <string.h>
 #include <string>
 #include <vector>
+#include <SFML/Graphics.hpp>
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
 /* portul de conectare la server*/
 int port;
 
-struct vm_info
+struct Tree_vms
 {
   char name[256];
-  char CPU_number[256];
-  char CPU_time[256];
-  char RAM[256];
-  char state[256];
-  int interface_nr;
-  char interface_list[25][256];
-  char ip_address[25][256];
-  char load[256];
-
+  std::vector<Tree_vms*>connections;
 };
+
+std::vector<Tree_vms*>getTreeList(int fd);
+Tree_vms*getTree(int fd);
 
 int main (int argc, char *argv[])
 {
@@ -177,46 +173,8 @@ int main (int argc, char *argv[])
           perror("[client-child]Error at write\n");
         }
 
-        std::vector<vm_info>vm_con;
-        ///Getting first list of connections
-        size_t mapSize;
-        if(read(sd_child,&mapSize,sizeof(size_t))<0)
-        {
-          perror("[client_child]Error at read\n");
-        }
-        
-        for(size_t i=0;i<mapSize;i++)
-        {
-          //key
-          size_t keys;
-          if(read(sd_child,&keys,sizeof(size_t))<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          char keyB[keys+1];
-          if(read(sd_child,keyB,keys)<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          keyB[keys]='\0';
-
-          //value
-          size_t values;
-          if(read(sd_child,&values,sizeof(size_t))<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          char valueB[values+1];
-          if(read(sd_child,valueB,values)<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          valueB[values]='\0';
-         
-          ///key into map
-          vm_con[keyB]=valueB;
-        }
-        
+        std::vector<Tree_vms*>vm_con;
+        vm_con=getTreeList(sd_child);
         
         while (hexagram_on)
         {
@@ -269,44 +227,7 @@ int main (int argc, char *argv[])
           if(strcmp(msg_from_server,"new list")==0)
           {
             vm_con.clear();///empty the map
-            bzero(&mapSize,sizeof(size_t));
-            if(read(sd_child,&mapSize,sizeof(size_t))<0)
-            {
-            perror("[client_child]Error at read\n");
-            }
-        
-            for(size_t i=0;i<mapSize;i++)
-        {
-          //key
-          size_t keys;
-          if(read(sd_child,&keys,sizeof(size_t))<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          char keyB[keys+1];
-          if(read(sd_child,keyB,keys)<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          keyB[keys]='\0';
-
-          //value
-          size_t values;
-          if(read(sd_child,&values,sizeof(size_t))<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          char valueB[values+1];
-          if(read(sd_child,valueB,values)<0)
-          {
-            perror("[client_child]Error at read\n");
-          }
-          valueB[values]='\0';
-         
-          ///key into map
-          vm_con[keyB]=valueB;
-        }
-             
+            vm_con=getTreeList(sd_child);
           }
         }
         
@@ -619,3 +540,51 @@ int main (int argc, char *argv[])
   /* inchidem conexiunea, am terminat */
   close (sd);
 };
+
+
+std::vector<Tree_vms*>getTreeList(int fd)
+{
+  std::vector<Tree_vms*>listTrees;
+  int size_list;bzero(&size_list,sizeof(int));
+  if(read(fd,&size_list,sizeof(int))<0)
+  {
+    perror("[client_child]Error a read\n");
+  }
+  
+  for(int i=0;i<size_list;i++)
+  {
+    listTrees.push_back(getTree(fd));
+  }
+  return listTrees;
+};
+Tree_vms*getTree(int fd)
+{
+  Tree_vms *tree=new Tree_vms();
+
+  char name[1024];bzero(name,1024*sizeof(char));
+  int size_name;bzero(&size_name,sizeof(int));
+
+  if(read(fd,&size_name,sizeof(int))<0)
+  {
+    perror("[client_child]Error at read\n");
+  }
+  if(read(fd,name,size_name)<0)
+  {
+    perror("[client_child]Error at read\n");
+  }  
+
+  strcpy(tree->name,name);
+
+  int size_con;bzero(&size_con,sizeof(int));
+  if(read(fd,&size_con,sizeof(int))<0)
+  {
+    perror("[client_child]Error at read\n");
+  }
+  
+  for(int i=0;i<size_con;i++)
+  {
+    tree->connections.push_back(getTree(fd));
+  }
+  return tree;
+}
+
