@@ -136,6 +136,7 @@ int main (int argc, char *argv[])
     int on=1;
     int size_msg_server_child;
     char msg_server_child[1024];
+    sleep(1);
     while (on)
     {
       ///clear vars
@@ -162,7 +163,7 @@ int main (int argc, char *argv[])
         perror("[client_child]Error write\n");
       }
       printf("[client_child]Sent %s of size %d to server_child\n",msg_server_child,size_msg_server_child);
-      sleep(5);
+      
     }
     
     close(wpipe[0]);
