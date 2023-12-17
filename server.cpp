@@ -80,9 +80,13 @@ struct Tree_vms
   char name[256];
   std::vector<Tree_vms*>connections;
 };
-std::vector<Tree_vms*> hexagram();
+
+std::vector<Tree_vms*>* hexagram();
+
 Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list);
+
 vm_info* vm_data_make(virDomainPtr vm);
+
 int parabola(char msg_recive[1024],char Rez[1024]);
 
 int list_vms(char Rez[25][1024]);
@@ -293,13 +297,18 @@ void raspunde(void *arg)
       {
         sleep(1);
         int hon=1;
-        std::vector<Tree_vms*>listT=hexagram();
-        printf("\n%s\n",listT[1]->name);
-        /*while (hon)
+        std::vector<Tree_vms*>*listT=hexagram();
+        while (hon)
         {
           
-        }*/
+        }
         
+      }
+
+      if(strcmp(msg_client_child,"close")==0)
+      {
+        on=0;
+        continue;
       }
     }
     
@@ -988,114 +997,7 @@ vm_info* vm_data_make(virDomainPtr vm)
 
 int parabola(char msg_recive[1024],char Rez[1024])
 {
-  char Type[256];
-  char Ident[256];
-  char Com[256];
 
-  char ic=msg_recive[0];
-
-  int nr_space=0;
-  int index=0;
-  int indexT=0,indexI=0,indexCom=0;
-  while (ic!='\0')
-  {
-    if(ic==' ')
-    {
-      if(nr_space==1)
-      {
-        Type[indexT]='\0';
-        printf("%s\n",Type);
-      }
-      
-      if(nr_space==2)
-      {
-        Ident[indexI]='\0';
-        printf("%s\n",Ident);
-      }
-      nr_space++;
-      ic=msg_recive[++index];
-      continue;
-    }
-    if(nr_space==1)
-    {
-      Type[indexT]=ic;
-      indexT++;
-    }
-
-    if(nr_space==2)
-    {
-      Ident[indexI]=ic;
-      indexI++;
-    }
-
-    if(nr_space>2)
-    {
-      Com[indexCom]=ic;
-      indexCom++;
-    }
-    ic=msg_recive[++index];
-  }
-  Com[indexCom]='\n';
-  printf("%s\n",Com);
-  int lines=0;
-  virConnectPtr con=virConnectOpen("qemu:///system");
-
-  if(con==nullptr)///conexiunea nu s-a realizat
-  {
-    printf("[server]Failed to open connection\n");
-    return -1;
-  };
-
-  virDomainPtr vm;///domeniu dupa IP/ID
-
-  if(strcmp(Type,"ID")==0)///ne conectam prin ID
-  {
-    int domainID = atoi(Ident);
-    vm=virDomainLookupByID(con,domainID);
-  }else
-  if(strcmp(Type,"IP")==0)///ne conectam prin IP
-  {
-    in_addr addr;
-    if(inet_pton(AF_INET,Ident,&addr)==1)
-    {
-      vm=virDomainLookupByUUIDString(con,Ident);
-    }
-      else
-      {
-        virConnectClose(con);
-        printf("[server]Could not find VM\n");
-        return -1;
-      }
-  }else
-  if(strcmp(Type,"name")==0)///ne conectam prin nume
-  {
-    vm=virDomainLookupByName(con,Ident);
-  }
-
-  if(vm==nullptr)
-  {
-    virConnectClose(con);
-    printf("[server]Could not find VM\n");
-    return -1;
-  }
-
-  bzero(Rez,1024);
-
-  ////execute command
-  printf("Execute command %s\n",Com);
-  
-  const char *command = "{ \"execute\": \"ls \" }";
-  char *result=virDomainQemuAgentCommand(vm,command,0,0);
-  if ( result != NULL) 
-  {
-    printf("Command executed %s\n",result);
-    free(result);
-  } else {
-      printf( "Failed to execute QEMU monitor command\n");
-  }
-  ///closing domain and connection
-  virDomainFree(vm);
-  virConnectClose(con);
   return 1;
 };
 
@@ -1149,7 +1051,7 @@ int insert_vm_info(vm_info vm_in)
   return 1;
 };
 
-std::vector<Tree_vms*> hexagram()
+std::vector<Tree_vms*>* hexagram()
 {
   virConnectPtr con=virConnectOpen("qemu:///system");///Stabilim conexiunea la hyperviser
   if(con==nullptr)
@@ -1178,7 +1080,7 @@ std::vector<Tree_vms*> hexagram()
   }
   virConnectClose(con);
 
-  std::vector<Tree_vms*>VMconnections;
+  std::vector<Tree_vms*>*VMconnections =new std::vector<Tree_vms*>();
   std::vector<int>marked_list;
   for(int i=0;i<list_vm_info.size();i++)
   {
@@ -1189,14 +1091,16 @@ std::vector<Tree_vms*> hexagram()
   {
     if(marked_list[i]==0)
     {
-      VMconnections.push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
+      VMconnections->push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
     }
   }
   return VMconnections;
 };
 Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list)
 {
-  Tree_vms node;strcpy(node.name,current_vm.name);
+  Tree_vms *node;
+  node=new Tree_vms();
+  strcpy(node->name,current_vm.name);
   int i=0;
   while(strcmp(list_vm_info[i]->name,current_vm.name)!=0)
     i++;
@@ -1206,10 +1110,10 @@ Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::
   {
     if(marked_list[i]==0 && vm_con(*list_vm_info[i],current_vm)==1)
     {
-      node.connections.push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
+      node->connections.push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
     }
   }
-  return &node;
+  return node;
 }
 int vm_con(vm_info vm1,vm_info vm2)
 {

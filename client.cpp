@@ -174,6 +174,11 @@ int main (int argc, char *argv[])
         printf("Parabola not open\n");
       }
 
+      if(strcmp(msg_server_child,"close")==0)
+      {
+        on=0;
+        continue;
+      }
       if(strcmp(msg_server_child,"hexagram")==0)
       {
         printf("Opening Hexagram\n");
@@ -222,6 +227,7 @@ int main (int argc, char *argv[])
   while(is_open)
   {
     ///to server
+    sleep(1);
     printf("Waiting command : ");
     fflush(stdout);
     bzero(&size_msg_send,sizeof(int));///cleaning send vars 
@@ -467,6 +473,22 @@ int main (int argc, char *argv[])
     if(strcmp(msg_recive,"close")==0)
     {
       is_open=0;
+      bzero(&size_msg_to_child,sizeof(int));
+      bzero(msg_to_child,1024*sizeof(char));
+
+      strcpy(msg_to_child,"close");
+      size_msg_to_child=strlen(msg_to_child)+1;
+ 
+      if(write(wpipe[1],&size_msg_to_child,sizeof(int))<0)///sending port to child
+      {
+      perror("[client]Write error\n");
+      }
+
+      if(write(wpipe[1],msg_to_child,size_msg_to_child)<0)///sending port to child
+      {
+        perror("[client]Write error\n");
+      }
+      continue;
     }else
     /*===================================================================*/
     /*                         UNKNOWN COMMAND                           */
