@@ -22,7 +22,30 @@
 /* portul folosit */
 #define PORT 2908
 
-int port_empty=2909;
+int get_Port() 
+{
+    FILE* fd = fopen("port.txt", "r+");
+    if (fd == nullptr) {
+        perror("Error opening port.txt");
+        exit(EXIT_FAILURE);
+    }
+
+    int port;
+    if (fscanf(fd, "%d", &port) != 1) {
+        perror("Error reading port from port.txt");
+        fclose(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    // Set the new empty port
+    int newEmptyPort = port + 1;
+    fseek(fd, 0, SEEK_SET);  // Move file pointer to the beginning
+    fprintf(fd, "%d", newEmptyPort);  // Write the new empty port to the file
+
+    fclose(fd);
+    return port;
+};
+
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
@@ -180,6 +203,8 @@ void raspunde(void *arg)
   int wpipe[2];///parent writes to child
   int rpipe[2];///parent read from child
 
+  int port_empty=get_Port();  
+
   if(pipe(wpipe)==-1)
   {
     exit(EXIT_FAILURE);
@@ -192,7 +217,7 @@ void raspunde(void *arg)
   {
     exit(EXIT_FAILURE);
   }
-
+////========================Child======================================
   if(pid_window==0)///child
   {
     close(wpipe[1]);////child cant write with this pipe
@@ -205,7 +230,6 @@ void raspunde(void *arg)
       printf("[server]Failed\n");
       exit(EXIT_FAILURE);
     }
-    
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = INADDR_ANY;
@@ -239,7 +263,6 @@ void raspunde(void *arg)
         close(rpipe[1]);
         exit(EXIT_FAILURE);
     }
-    port_empty++;
     char msg_from_client_c[1024];
     int size_msg_from_client_c;
     while(true)
@@ -258,7 +281,7 @@ void raspunde(void *arg)
       if(strcmp(msg_from_client_c,"hexagram")==0)
       {
         std::vector<Tree_vms*>vms_con=hexagram();
-
+        printf("pls");
         ///send tree
         if(sendTreeList(clientSocket,vms_con)==-1)
         {
@@ -339,7 +362,7 @@ void raspunde(void *arg)
     close(wpipe[0]);
     close(rpipe[1]);
     close(clientSocket);
-    port_empty--;
+
     exit(EXIT_SUCCESS);
   }
   
@@ -358,11 +381,11 @@ void raspunde(void *arg)
     bzero(&size_msg_recive,sizeof(int));///cleaning recive vars
     bzero(msg_recive,1024*sizeof(char));
 
-    if(read(tdL.cl,&size_msg_recive,sizeof(int))<=0)
+    if(read(tdL.cl,&size_msg_recive,sizeof(int))<0)
     {
       perror("[server]Error at read()\n");
     }
-    if(read(tdL.cl,msg_recive,size_msg_recive)<=0)
+    if(read(tdL.cl,msg_recive,size_msg_recive)<0)
     {
       perror("[server]Error at read()\n");
     }
@@ -388,7 +411,7 @@ void raspunde(void *arg)
       {
         perror("[server]Error at write()\n");
       }
-      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+      continue;      
     }else        
     /*======================================================================*/
     /*                              PARABOLA                                */
@@ -409,7 +432,7 @@ void raspunde(void *arg)
       {
         perror("[server]Error at write()\n");
       }
-      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+      continue;      
     }else        
     /*=====================================================================*/
     /*                            CLOSE HEXAGRAM                           */
@@ -430,7 +453,7 @@ void raspunde(void *arg)
       {
         perror("[server]Error at write()\n");
       }
-      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+      continue;      
     }else    
     /*====================================================================*/
     /*                               HEXAGRAM                             */

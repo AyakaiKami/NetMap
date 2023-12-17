@@ -129,6 +129,8 @@ int main (int argc, char *argv[])
       perror ("[client_child]Eroare la connect().\n");
       return errno;
     }
+    printf("pls");
+
     int is_on=1;
     char msg_from_parent[1024];
     int size_msg_from_parent;
@@ -139,6 +141,7 @@ int main (int argc, char *argv[])
     int size_msg_to_server;
     while(is_on)
     {
+      printf("pls");
       bzero(&size_msg_from_parent,sizeof(int));
       bzero(msg_from_parent,1024*sizeof(char));
       if(read(wpipe[0],&size_msg_from_parent,sizeof(int))<0)
@@ -162,6 +165,7 @@ int main (int argc, char *argv[])
       if(strcmp(msg_from_parent,"hexagram")==0)
       {
         int hexagram_on=1;
+        printf("pls");
         bzero(&size_msg_to_server,sizeof(int));
         bzero(msg_to_server,1024);
         strcpy(msg_to_server,"hexagram");
@@ -176,6 +180,7 @@ int main (int argc, char *argv[])
         }
 
         std::vector<Tree_vms*>vm_con;
+        printf("pls");
         vm_con=getTreeList(sd_child);
         sf::RenderWindow window(sf::VideoMode(1200,800),"Hexagram");
         GraphDrawList(window,vm_con,0,1200,800);
