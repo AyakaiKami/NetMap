@@ -16,12 +16,26 @@
 #include <map>
 #include <string.h>
 #include <string>
+#include <vector>
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
 /* portul de conectare la server*/
 int port;
 
+struct vm_info
+{
+  char name[256];
+  char CPU_number[256];
+  char CPU_time[256];
+  char RAM[256];
+  char state[256];
+  int interface_nr;
+  char interface_list[25][256];
+  char ip_address[25][256];
+  char load[256];
+
+};
 
 int main (int argc, char *argv[])
 {
@@ -163,7 +177,7 @@ int main (int argc, char *argv[])
           perror("[client-child]Error at write\n");
         }
 
-        std::map<std::string,std::string>vm_con;
+        std::vector<vm_info>vm_con;
         ///Getting first list of connections
         size_t mapSize;
         if(read(sd_child,&mapSize,sizeof(size_t))<0)

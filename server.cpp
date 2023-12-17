@@ -39,7 +39,6 @@ int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[25
 int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256]);
 
 double getCPULoad(virDomainPtr vm);
-std::map<std::string,std::string> hexagram();
 struct vm_info
 {
   char name[256];
@@ -53,13 +52,21 @@ struct vm_info
   char load[256];
 
 };
-
+struct Tree_vms
+{
+  char name[256];
+  std::vector<Tree_vms*>connections;
+};
+std::vector<Tree_vms*> hexagram();
+Tree_vms makeGraph(vm_info &current_vm,std::vector<vm_info>&list_vm_info,std::vector<int>&marked_list);
 vm_info vm_data_make(virDomainPtr vm);
 int parabola(char msg_recive[1024],char Rez[1024]);
 
 int list_vms(char Rez[25][1024]);
 
 int vm_con(vm_info vm1,vm_info vm2);////are 2 vm s connected?
+
+int sendTreeList(int fd,std::vector<Tree_vms*>&list);
 ///====================================START==============================================================
 int main ()
 {
@@ -249,36 +256,14 @@ void raspunde(void *arg)
 
       if(strcmp(msg_from_client_c,"hexagram")==0)
       {
-        std::map<std::string,std::string>vms_con=hexagram();
-        size_t mapSize=vms_con.size();
-        if(write(clientSocket,&mapSize,sizeof(size_t))<=0)
+        std::vector<Tree_vms*>vms_con=hexagram();
+
+        ///send tree
+        if(sendTreeList()==-1)
         {
-          perror("[server_child]Error write\n");
+          perror("[server_child]Error sending tree\n");
         }
-
-        for(const auto& ind :vms_con)
-        {
-          size_t k_size=ind.first.size();
-          if(write(clientSocket,&k_size,sizeof(size_t))<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }
-          if(write(clientSocket,ind.first.c_str(),k_size)<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }
-
-          size_t v_size=ind.second.size();
-          if(write(clientSocket,&v_size,sizeof(size_t))<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }
-          if(write(clientSocket,ind.second.c_str(),v_size)<=0)
-          {
-            perror("[server_child]Error at write\n");
-          }                    
-        }
-
+        
         auto start_time=std::chrono::steady_clock::now();
         int hexagram_on=1;
         while (hexagram_on)
@@ -289,7 +274,6 @@ void raspunde(void *arg)
           if(dif_minutes>=60*2)
           {
             vms_con=hexagram();
-            mapSize=vms_con.size();
 
             char msg_to_clientc[1024];int size_msg_to_clientc;
             bzero(&size_msg_to_clientc,sizeof(int));
@@ -306,33 +290,7 @@ void raspunde(void *arg)
               perror("[server_child]Error at write\n");
             }  
             
-            if(write(clientSocket,&mapSize,sizeof(size_t))<=0)
-            {
-              perror("[server_child]Error write\n");
-            }
-
-            for(const auto& ind :vms_con)
-            {
-              size_t k_size=ind.first.size();
-              if(write(clientSocket,&k_size,sizeof(size_t))<=0)
-              {
-                perror("[server_child]Error at write\n");
-              }
-              if(write(clientSocket,ind.first.c_str(),k_size)<=0)
-              {
-                perror("[server_child]Error at write\n");
-              }
-
-              size_t v_size=ind.second.size();
-              if(write(clientSocket,&v_size,sizeof(size_t))<=0)
-              {
-                perror("[server_child]Error at write\n");
-              }
-              if(write(clientSocket,ind.second.c_str(),v_size)<=0)
-              {
-                perror("[server_child]Error at write\n");
-              }                    
-            }
+            ///send new list
 
           }
           else
@@ -1227,7 +1185,7 @@ int insert_vm_info(vm_info vm_in)
   return 1;
 };
 
-std::map<std::string,std::string> hexagram()
+std::vector<Tree_vms*> hexagram()
 {
   virConnectPtr con=virConnectOpen("qemu:///system");///Stabilim conexiunea la hyperviser
   if(con==nullptr)
@@ -1256,16 +1214,39 @@ std::map<std::string,std::string> hexagram()
   }
   virConnectClose(con);
 
-  std::map<std::string,std::string>VMconnections;
-  for(int i=0;i<list_vm_info.size()-1;i++)
-    for(int j=i+1;j<list_vm_info.size();j++)
-      if(vm_con(list_vm_info[i],list_vm_info[j])==1)
-      {
-        VMconnections[std::string(list_vm_info[i].name)]=std::string(list_vm_info[j].name);
-      }
+  std::vector<Tree_vms*>VMconnections;
+  std::vector<int>marked_list;
+  for(int i=0;i<list_vm_info.size();i++)
+  {
+    marked_list.push_back(0);
+  }
+
+  for(int i=0;i<list_vm_info.size();i++)
+  {
+    if(marked_list[i]==0)
+    {
+      VMconnections.push_back(makeGraph(list_vm_info[i],list_vm_info,marked_list));
+    }
+  }
   return VMconnections;
 };
+Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info>&list_vm_info,std::vector<int>&marked_list)
+{
+  Tree_vms node;strcpy(node.name,current_vm.name);
+  int i=0;
+  while(strcmp(list_vm_info[i].name,current_vm.name)!=0)
+    i++;
+  marked_list[i]=1;
 
+  for(int i=0;i<list_vm_info.size();i++)
+  {
+    if(marked_list[i]==0 && vm_con(list_vm_info[i],current_vm)==1)
+    {
+      node.connections.push_back(makeGraph(list_vm_info[i],list_vm_info,marked_list));
+    }
+  }
+  return &node;
+}
 int vm_con(vm_info vm1,vm_info vm2)
 {
   char ip_vm1[256];strcpy(ip_vm1,vm1.ip_address[0]);
@@ -1281,5 +1262,11 @@ int vm_con(vm_info vm1,vm_info vm2)
       nr_points++;
     index++;
   }
+  return 1;
+}
+
+int sendTreeList(int fd,std::vector<Tree_vms*>&list)
+{
+
   return 1;
 }
