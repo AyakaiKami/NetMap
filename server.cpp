@@ -317,6 +317,12 @@ void raspunde(void *arg)
             strcpy(msg_client_child,"new list");size_msg_client_child=strlen(msg_client_child)+1;
             sendTreeList(clientSocket,listT);
           }
+          else
+          {
+            bzero(&size_msg_client_child,sizeof(int));
+            bzero(msg_client_child,1024*sizeof(char));
+            strcpy(msg_client_child,"none");size_msg_client_child=strlen(msg_client_child)+1;            
+          }
           bzero(&size_msg_client_child,sizeof(int));
           bzero(msg_client_child,1024*sizeof(char));
           if(read(clientSocket,&size_msg_client_child,sizeof(int))>0 && read(clientSocket,msg_client_child,size_msg_client_child)>0)
@@ -353,7 +359,7 @@ void raspunde(void *arg)
   {
     perror("[server]Error sending port\n");
   }
-  int hon;
+
   while(is_open)
   {
     printf("[server]Waitting for input on thread : %d \n",tdL.idThread);
@@ -417,6 +423,7 @@ void raspunde(void *arg)
     /*                            CLOSE HEXAGRAM                           */
     if(strcmp(msg_recive,"close hexagram")==0)
     {
+      
       bzero(&size_msg_send,sizeof(int));///cleaning send vars
       bzero(msg_send,1024*sizeof(char));
 

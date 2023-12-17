@@ -139,7 +139,7 @@ int main (int argc, char *argv[])
     printf("[client_child]Connected\n");
     /*==========================================================================*/
     /*                                 Child Connected                          */
-    int on=1;
+    int on=1;int hon=0;
     int size_msg_server_child;
     char msg_server_child[1024];
     sleep(1);
@@ -226,6 +226,8 @@ int main (int argc, char *argv[])
             continue;
           }
         }
+        bzero(&size_msg_server_child,sizeof(int));
+        bzero(msg_server_child,1024*sizeof(char));
         if(read(sd_child,&size_msg_server_child,sizeof(int))>0 && read(sd_child,msg_server_child,size_msg_server_child)>0)
         {
           if(strcmp(msg_server_child,"new list")==0)
@@ -237,6 +239,20 @@ int main (int argc, char *argv[])
           }         
         }             
 
+
+        ///default msg to server_child
+        bzero(&size_msg_server_child,sizeof(int));
+        bzero(msg_server_child,1024*sizeof(char));        
+        strcpy(msg_server_child,"none");size_msg_server_child=strlen(msg_server_child)+1;
+
+        if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
+        {
+          perror("[client_child]Error at write\n");
+        }
+        if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
+        {
+          perror("[client_child]Error at write\n");
+        }
         }
         
       }
@@ -257,6 +273,7 @@ int main (int argc, char *argv[])
   /*==============================PARENT==================================*/
   close(wpipe[0]);
   close(rpipe[1]);
+  int hon=0;
   int port_empty;
   if(read(sd,&port_empty,sizeof(int))<0)
   {
@@ -312,6 +329,22 @@ int main (int argc, char *argv[])
       perror("[client]Error at read()\n");
     }
 
+    if(hon==1)///default msg to child
+    {
+      char msg_child[1024];bzero(msg_child,1024*sizeof(char));
+      int size_msg_child;bzero(&size_msg_child,sizeof(int));
+
+      strcpy(msg_child,"none");size_msg_child=strlen(msg_child)+1;
+
+      if(write(wpipe[1],&size_msg_child,sizeof(int))<=0)
+      {
+        perror("[client]Error write\n");
+      }  
+      if(write(wpipe[1],msg_child,size_msg_child)<=0)
+      {
+        perror("[client]Error write\n");
+      }  
+    }
     //printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
     /*==================================================================*/
@@ -360,6 +393,7 @@ int main (int argc, char *argv[])
     /*                         CLOSE HEXAGRAM                          */
     if(strcmp(msg_recive,"close hexagram")==0)
     {
+      hon=0;
       bzero(&size_msg_to_child,sizeof(int));
       bzero(msg_to_child,1024*sizeof(char));
 
@@ -381,6 +415,7 @@ int main (int argc, char *argv[])
     /*                            HEXAGRAM                            */
     if(strcmp(msg_recive,"hexagram")==0)
     {
+      hon=1;
       bzero(&size_msg_to_child,sizeof(int));
       bzero(msg_to_child,1024*sizeof(char));
 
