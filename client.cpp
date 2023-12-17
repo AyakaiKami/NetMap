@@ -175,8 +175,9 @@ int main (int argc, char *argv[])
 
         std::vector<Tree_vms*>vm_con;
         vm_con=getTreeList(sd_child);
-        
-        while (hexagram_on)
+        sf::RenderWindow window(sf::VideoMode(1200,800),"Hexagram");
+
+        while (hexagram_on )
         {
           ///from parent
           bzero(&size_msg_from_parent,sizeof(int));
@@ -217,6 +218,7 @@ int main (int argc, char *argv[])
           {
             perror("[client-child]Error at write\n");
           }
+            window.close();
             continue;
           }
           else
@@ -228,6 +230,7 @@ int main (int argc, char *argv[])
           {
             vm_con.clear();///empty the map
             vm_con=getTreeList(sd_child);
+            window.clear();
           }
         }
         
