@@ -81,8 +81,8 @@ struct Tree_vms
   std::vector<Tree_vms*>connections;
 };
 std::vector<Tree_vms*> hexagram();
-Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info>&list_vm_info,std::vector<int>&marked_list);
-vm_info vm_data_make(virDomainPtr vm);
+Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list);
+vm_info* vm_data_make(virDomainPtr vm);
 int parabola(char msg_recive[1024],char Rez[1024]);
 
 int list_vms(char Rez[25][1024]);
@@ -289,6 +289,18 @@ void raspunde(void *arg)
 
       printf("[server_child]Got %s of size %d from client_child\n",msg_client_child,size_msg_client_child);
 
+      if(strcmp(msg_client_child,"hexagram")==0)
+      {
+        sleep(1);
+        int hon=1;
+        std::vector<Tree_vms*>listT=hexagram();
+        printf("\n%s\n",listT[1]->name);
+        /*while (hon)
+        {
+          
+        }*/
+        
+      }
     }
     
     close(wpipe[0]);
@@ -895,30 +907,29 @@ double getCPULoad(virDomainPtr vm)
 };
 
 
-vm_info vm_data_make(virDomainPtr vm)
+vm_info* vm_data_make(virDomainPtr vm)
 {
   
-  vm_info vm_d;
+  vm_info* vm_d=new vm_info;
 
   ///name
-  strcpy(vm_d.name,virDomainGetName(vm));
-  
+  strcpy(vm_d->name,virDomainGetName(vm));
   virDomainInfo vm_d_info;
   if(virDomainGetInfo(vm,&vm_d_info)!=0)
   {
     printf("[server]Eroare la obtinerea datelor\n");
-    sprintf(vm_d.CPU_number,"NULL");
-    sprintf(vm_d.CPU_time,"NULL");
-    sprintf(vm_d.RAM,"NULL");
+    sprintf(vm_d->CPU_number,"NULL");
+    sprintf(vm_d->CPU_time,"NULL");
+    sprintf(vm_d->RAM,"NULL");
   }
   else
   {
   ///CPU
-  sprintf(vm_d.CPU_number,"%d",vm_d_info.nrVirtCpu);
-  sprintf(vm_d.CPU_time,"%d",vm_d_info.cpuTime);
+  sprintf(vm_d->CPU_number,"%d",vm_d_info.nrVirtCpu);
+  sprintf(vm_d->CPU_time,"%d",vm_d_info.cpuTime);
 
   ///RAM
-  sprintf(vm_d.RAM,"%d KB",vm_d_info.memory);
+  sprintf(vm_d->RAM,"%d KB",vm_d_info.memory);
   
   }
   ///state
@@ -926,10 +937,10 @@ vm_info vm_data_make(virDomainPtr vm)
   if(virDomainGetState(vm,&vm_state,&reason,0)!=0)
   {
     perror("[server]Eroare la obinerea starii\n");
-    sprintf(vm_d.state,"NULL");
+    sprintf(vm_d->state,"NULL");
   }
   else
-  sprintf(vm_d.state,"%d",vm_state);
+  sprintf(vm_d->state,"%d",vm_state);
 
   ///load
 
@@ -937,10 +948,10 @@ vm_info vm_data_make(virDomainPtr vm)
     if(load_rez==-1.0)
     {
       printf("[server]Eroare la getCPULoad\n");
-      sprintf(vm_d.load,"NULL");
+      sprintf(vm_d->load,"NULL");
     }
     else
-    sprintf(vm_d.load,"%f",load_rez);
+    sprintf(vm_d->load,"%f",load_rez);
 
 
   ///interface and ip address
@@ -950,21 +961,21 @@ vm_info vm_data_make(virDomainPtr vm)
   if((count_if=virDomainInterfaceAddresses(vm,&ifaces,VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE,0))<0)
   {
     printf("[server]Eroare la obtinerea interfetelor\n");
-    vm_d.interface_nr=-1;
+    vm_d->interface_nr=-1;
   }
   else
   {
-    vm_d.interface_nr=count_if;
+    vm_d->interface_nr=count_if;
     for(int i=0;i<count_if;i++)
   {
-    strcpy(vm_d.interface_list[i],ifaces[i]->name);
+    strcpy(vm_d->interface_list[i],ifaces[i]->name);
     ///ip address for interface
     _virDomainInterfaceIPAddress *ips=ifaces[i]->addrs;
   
     if(ips->type==VIR_IP_ADDR_TYPE_IPV4)
-      sprintf(vm_d.ip_address[i],"%s", ips->addr);
+      sprintf(vm_d->ip_address[i],"%s", ips->addr);
     else
-      sprintf(vm_d.ip_address[i],"NULL");
+      sprintf(vm_d->ip_address[i],"NULL");
   }
   }
   for (int i = 0; i < count_if; i++)
@@ -1157,7 +1168,7 @@ std::vector<Tree_vms*> hexagram()
   }
   
   ///parcurgem fiecare vm
-  std::vector<vm_info>list_vm_info;
+  std::vector<vm_info*>list_vm_info;
 
   for(int i=0;i<nr_vms;i++)
   {
@@ -1178,24 +1189,24 @@ std::vector<Tree_vms*> hexagram()
   {
     if(marked_list[i]==0)
     {
-      VMconnections.push_back(makeGraph(list_vm_info[i],list_vm_info,marked_list));
+      VMconnections.push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
     }
   }
   return VMconnections;
 };
-Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info>&list_vm_info,std::vector<int>&marked_list)
+Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list)
 {
   Tree_vms node;strcpy(node.name,current_vm.name);
   int i=0;
-  while(strcmp(list_vm_info[i].name,current_vm.name)!=0)
+  while(strcmp(list_vm_info[i]->name,current_vm.name)!=0)
     i++;
   marked_list[i]=1;
 
   for(int i=0;i<list_vm_info.size();i++)
   {
-    if(marked_list[i]==0 && vm_con(list_vm_info[i],current_vm)==1)
+    if(marked_list[i]==0 && vm_con(*list_vm_info[i],current_vm)==1)
     {
-      node.connections.push_back(makeGraph(list_vm_info[i],list_vm_info,marked_list));
+      node.connections.push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
     }
   }
   return &node;

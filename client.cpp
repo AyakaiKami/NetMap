@@ -152,8 +152,9 @@ int main (int argc, char *argv[])
       {
         perror("[client_child]Error read\n");
       }     
-      printf("[client_child]Got %s of size %d from parrent\n",msg_server_child,size_msg_server_child);
+      ///printf("[client_child]Got %s of size %d from parrent\n",msg_server_child,size_msg_server_child);
       //send data to server_child
+      sleep(1);
       if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
       {
         perror("[client_child]Error write\n");
@@ -162,8 +163,33 @@ int main (int argc, char *argv[])
       {
         perror("[client_child]Error write\n");
       }
-      printf("[client_child]Sent %s of size %d to server_child\n",msg_server_child,size_msg_server_child);
-      
+      //printf("[client_child]Sent %s of size %d to server_child\n",msg_server_child,size_msg_server_child);
+      sleep(1);
+      if(strcmp(msg_server_child,"close hexagram")==0)
+      {
+        printf("Hexagram not open\n");
+      }
+      if(strcmp(msg_server_child,"close parabola")==0)
+      {
+        printf("Parabola not open\n");
+      }
+
+      if(strcmp(msg_server_child,"hexagram")==0)
+      {
+        printf("Opening Hexagram\n");
+        int hon=1;
+        
+        /*while (hon)
+        {
+          
+        }*/
+        
+      }
+
+      if(strcmp(msg_server_child,"parabola")==0)
+      {
+        printf("Opening Parabola\n");
+      }
     }
     
     close(wpipe[0]);
