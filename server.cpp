@@ -451,7 +451,7 @@ void raspunde(void *arg)
       {
         perror("[server]Error at write()\n");
       }
-      printf("[server]Client on thread %d is closing\n",tdL.idThread);      
+      continue;      
     }else
     /*====================================================================*/
     /*                         LIST                                       */
@@ -504,7 +504,7 @@ void raspunde(void *arg)
       bzero(&size_msg_send,sizeof(int));
       bzero(msg_send,1024*sizeof(char));
 
-      strcpy(msg_send,rez[i]);;
+      strcpy(msg_send,rez[i]);
       size_msg_send=strlen(msg_send)+1;
       printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
 
@@ -1138,7 +1138,6 @@ int parabola(char msg_recive[1024],char Rez[1024])
 
 int list_vms(char rez[25][1024])
 {
-  printf("here\n");
   virConnectPtr con=virConnectOpen("qemu:///system");
   
   if(con==NULL)
@@ -1148,12 +1147,10 @@ int list_vms(char rez[25][1024])
   }
 
   int nr_vms=virConnectNumOfDomains(con);
-  printf("here\n");
   if(nr_vms>0)
   {
     int *vmIDs=new int[nr_vms];
 
-    printf("here");
     if(virConnectListDomains(con,vmIDs,nr_vms)<0)
     {
       printf("[server]Failed to get list of IDs\n");

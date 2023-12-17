@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <SFML/Graphics.hpp>
+#include <math.h>
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
@@ -177,7 +178,7 @@ int main (int argc, char *argv[])
         std::vector<Tree_vms*>vm_con;
         vm_con=getTreeList(sd_child);
         sf::RenderWindow window(sf::VideoMode(1200,800),"Hexagram");
-        GraphDraw(window);
+        GraphDrawList(window,vm_con,0,1200,800);
         while (hexagram_on )
         {
           ///from parent
@@ -234,7 +235,7 @@ int main (int argc, char *argv[])
             vm_con.clear();///empty the map
             vm_con=getTreeList(sd_child);
             window.clear();
-            GraphDraw(window);
+            GraphDrawList(window,vm_con,0,1200,800);
           }
         }
         
@@ -597,9 +598,46 @@ Tree_vms*getTree(int fd)
 
 void GraphDraw(sf::RenderWindow &window,Tree_vms* tree,int sx,int fx,int height)
 {
-  
+  sf::CircleShape circle(50);
+  circle.setPosition(sx+fx/2,height);
+  circle.setFillColor(sf::Color::White);
+  sf::Font font;
+  if(!font.loadFromFile("Basic-Regular.ttf"))
+  {
+    perror("[client_child]Failed to get font\n");
+    exit(EXIT_FAILURE);
+  }
+  sf::Text text(tree->name,font,10);
+  text.setPosition(sx+fx/2-strlen(tree->name),height);text.setFillColor(sf::Color::Black);
+  window.draw(circle);window.draw(text);
+  int sp=(fx-sx)/tree->connections.size();
+  for(int i=0;i<tree->connections.size();i++)
+  {
+    sf::Vector2f center1 = sf::Vector2f(sx + fx / 2, height + circle.getRadius());
+    sf::Vector2f center2 = sf::Vector2f(sx + sp * i + sp / 2 + circle.getRadius(), height);
+
+    sf::Vector2f direction = center2 - center1;
+    float distance = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+
+    sf::Vector2f unitDirection = direction / distance;
+
+    sf::Vector2f pointOnCircle1 = center1 + circle.getRadius() * unitDirection;
+    sf::Vector2f pointOnCircle2 = center2 - circle.getRadius() * unitDirection;
+
+    sf::Vertex line[] = {
+            sf::Vertex(pointOnCircle1),
+            sf::Vertex(pointOnCircle2)
+    };
+    window.draw(line, 2, sf::Lines);
+    GraphDraw(window,tree->connections[i],sx+sp*i,sx+sp*(i+1),height+150);
+  }
 };
 void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>con,int sx,int fx,int height)
 {
+  int sp=(fx-sx)/con.size();
 
+  for(int i=0;i<con.size();i++)
+  {
+    GraphDraw(window,con.at(i),sx+sp*i,sx+sp*(i+1),height);
+  }
 };
