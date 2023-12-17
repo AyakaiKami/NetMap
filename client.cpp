@@ -196,7 +196,47 @@ int main (int argc, char *argv[])
         window.display();
         while (hon && window.isOpen())
         {
-          
+          sf::Event event;
+          while (window.pollEvent(event)) 
+          {
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+          }
+        bzero(&size_msg_server_child,sizeof(int));
+        bzero(msg_server_child,1024*sizeof(char));        
+        if(read(wpipe[0],&size_msg_server_child,sizeof(int))>0 && read(wpipe[0],msg_server_child,size_msg_server_child)>0)
+        {
+          if(strcmp(msg_server_child,"close hexagram")==0)
+          {
+            hon=1;
+            window.close();
+            bzero(&size_msg_server_child,sizeof(int));
+            bzero(msg_server_child,1024*sizeof(char));
+            strcpy(msg_server_child,"close hexagram");size_msg_server_child=strlen(msg_server_child)+1;
+
+            if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
+            {
+              perror("[client_child]Error at write\n");
+            }
+            if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
+            {
+              perror("[client_child]Error at write\n");
+            }
+            continue;
+          }
+        }
+        if(read(sd_child,&size_msg_server_child,sizeof(int))>0 && read(sd_child,msg_server_child,size_msg_server_child)>0)
+        {
+          if(strcmp(msg_server_child,"new list")==0)
+          {
+            free(list);list=getTreeList(sd_child);///getting the new list
+            window.clear();///draw
+            GraphDrawList(window,list,1200);
+            window.display();
+          }         
+        }             
+
         }
         
       }
@@ -569,7 +609,7 @@ void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float
     }
 
     // Draw the circle
-    sf::CircleShape circle(25);
+    sf::CircleShape circle(40);
     circle.setPosition(x - circle.getRadius(), y - circle.getRadius());
     circle.setFillColor(sf::Color::White);
     circle.setOutlineThickness(2);
@@ -604,13 +644,11 @@ void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float
 void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>*con,int x) 
 {
   int sp=0;
-    if(con->size()<0)
+    if(con->size()>0)
     {
       sp=x/(con->size()+1);
-      printf("x : %d , sp : %d",x,sp);
       for (int i = 0; i < con->size(); i++) 
       {
-        printf("%d : %s at x : %d\n",i,con->at(i)->name,sp*(i+1));
         GraphDraw(window, con->at(i), sp * (i+1),50,200,100);
       }
     }

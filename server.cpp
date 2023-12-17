@@ -297,18 +297,36 @@ void raspunde(void *arg)
       }
 
       printf("[server_child]Got %s of size %d from client_child\n",msg_client_child,size_msg_client_child);
-
+/*===============================================================================*/
+/*                           HEXAGRAM                                   */
       if(strcmp(msg_client_child,"hexagram")==0)
       {
         sleep(1);
         int hon=1;
         std::vector<Tree_vms*>*listT=hexagram();
         sendTreeList(clientSocket,listT);
-  
+        auto send_again=std::chrono::steady_clock::now()+std::chrono::minutes(2);
         
         while (hon)
         {
-          
+          if(std::chrono::steady_clock::now()>=send_again)
+          {
+            free(listT);listT=hexagram();
+            bzero(&size_msg_client_child,sizeof(int));
+            bzero(msg_client_child,1024*sizeof(char));
+            strcpy(msg_client_child,"new list");size_msg_client_child=strlen(msg_client_child)+1;
+            sendTreeList(clientSocket,listT);
+          }
+          bzero(&size_msg_client_child,sizeof(int));
+          bzero(msg_client_child,1024*sizeof(char));
+          if(read(clientSocket,&size_msg_client_child,sizeof(int))>0 && read(clientSocket,msg_client_child,size_msg_client_child)>0)
+          {
+            if(strcmp(msg_client_child,"close hexagram")==0)
+            {
+              hon=0;
+              continue;
+            }
+          }
         }
         
       }
@@ -335,6 +353,7 @@ void raspunde(void *arg)
   {
     perror("[server]Error sending port\n");
   }
+  int hon;
   while(is_open)
   {
     printf("[server]Waitting for input on thread : %d \n",tdL.idThread);
