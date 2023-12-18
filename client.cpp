@@ -198,7 +198,7 @@ int main (int argc, char *argv[])
         while (hon && window->isOpen())
         {
           sf::Event event;
-          while (window->pollEvent(event)) 
+          while (window->pollEvent(event) ) 
           {
               if (event.type == sf::Event::Closed) {
                   window->close();
@@ -291,7 +291,7 @@ int main (int argc, char *argv[])
           {
             perror("[client_child]Error at write\n");
           }
-          }
+        }
 
       } 
 
