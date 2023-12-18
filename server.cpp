@@ -19,6 +19,8 @@
 #include <cstring>
 #include <chrono>
 #include <iostream>
+#include <ctime>
+#include <iomanip>
 //#include <jsoncpp/json/json.h>
 /* portul folosit */
 #define PORT 2908
@@ -46,12 +48,7 @@ int get_Port()
     fclose(fd);
     return port;
 };
-std::string timePointAsString(const std::chrono::system_clock::time_point& tp) {
-    std::time_t t = std::chrono::system_clock::to_time_t(tp);
-    std::string ts = std::ctime(&t);
-    ts.resize(ts.size()-1);
-    return ts;
-}
+
 
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
@@ -87,7 +84,7 @@ struct Tree_vms
   char name[256];
   std::vector<Tree_vms*>*connections;
 };
-void saveVMS(sqlite3* db, std::vector<vm_info*>& list_vm_info);
+void saveVMS(std::vector<vm_info*>& list_vm_info);
 std::vector<Tree_vms*>* hexagram();
 
 Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list);
@@ -1133,7 +1130,7 @@ std::vector<Tree_vms*>* hexagram()
   
   ///parcurgem fiecare vm
   std::vector<vm_info*>list_vm_info;
-
+  saveVMS(list_vm_info);
   for(int i=0;i<nr_vms;i++)
   {
     virDomainPtr vmp=virDomainLookupByID(con,ListdomainID[i]);
@@ -1241,10 +1238,27 @@ int sendTree(int fd,Tree_vms*tree)
   return 1;
 }
 
+std::string getCurrentDateAsString() {
+    // Get the current time point
+    auto now = std::chrono::system_clock::now();
 
-void saveVMS(sqlite3* db, std::vector<vm_info*>& list_vm_info) {
-    char* errMsg = nullptr;
+    // Convert the time point to a time_t object
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
 
+    // Convert the time_t to a struct tm in local time
+    std::tm* localTime = std::localtime(&currentTime);
+
+    // Format the struct tm into a string
+    std::ostringstream oss;
+    oss << std::put_time(localTime, "%Y-%m-%d"); // Customize the format as needed
+    return oss.str();
+}
+
+void saveVMS(std::vector<vm_info*>& list_vm_info) 
+{
+  char* errMsg = nullptr;
+  
+/*
     // Insert into SAVES table
     std::string saveQuery = "INSERT INTO SAVES (DATA_SAVE) VALUES ('some_data');";
     if (sqlite3_exec(db, saveQuery.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
@@ -1283,5 +1297,5 @@ void saveVMS(sqlite3* db, std::vector<vm_info*>& list_vm_info) {
                 return;  // Abort the function if INTERFACES insertion fails
             }
         }
-    }
+    }*/
 }
