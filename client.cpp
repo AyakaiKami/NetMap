@@ -266,6 +266,7 @@ int main (int argc, char *argv[])
           printf("Child Got from server: %s of %d\n",msg_server_child,size_msg_server_child);          
           if(strcmp(msg_server_child,"new list")==0)
           {
+            printf("[client_child]New list\n");
             free(list);
             list=getTreeList(sd_child);///getting the new list
             window->clear();///draw
@@ -274,7 +275,7 @@ int main (int argc, char *argv[])
             free(list);
             GraphDrawList(*window,list,1200);
             window->display();
-            
+            continue;
           }         
                        
 
