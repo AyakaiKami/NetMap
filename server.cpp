@@ -337,7 +337,7 @@ void raspunde(void *arg)
           auto end=std::chrono::steady_clock::now();
           auto dif=std::chrono::duration_cast<std::chrono::seconds>(end-start);
           std::cout<<dif.count()<<std::endl;
-          if(dif.count()>=120)
+          if(dif.count()>=20)
           {
             start=std::chrono::steady_clock::now();
             printf("[server_child]New list\n");
@@ -354,6 +354,7 @@ void raspunde(void *arg)
               perror("[server-child]Error at write\n");
             }            
             sendTreeList(clientSocket,listT);
+            continue;
           }
           else
           {
