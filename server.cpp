@@ -276,7 +276,7 @@ void raspunde(void *arg)
         close(rpipe[1]);
         exit(EXIT_FAILURE);
     }
-    printf("Connected child\n");
+    //printf("Connected child\n");
     /*=============================================================================*/
     /*                             Child Connected                                 */
     int on=1;
@@ -300,7 +300,7 @@ void raspunde(void *arg)
         exit(EXIT_FAILURE);
       }
 
-      printf("[server_child]Got %s of size %d from client_child\n",msg_client_child,size_msg_client_child);
+      //printf("[server_child]Got %s of size %d from client_child\n",msg_client_child,size_msg_client_child);
 /*===============================================================================*/
 /*                           HEXAGRAM                                   */
       if(strcmp(msg_client_child,"hexagram")==0)
@@ -351,7 +351,6 @@ void raspunde(void *arg)
               perror("[server-child]Error at write\n");
             }            
             sendTreeList(clientSocket,listT);
-            continue;
           }
           else
           {
@@ -375,6 +374,7 @@ void raspunde(void *arg)
       if(strcmp(msg_client_child,"close")==0)
       {
         on=0;
+        printf("[server_child]Closing\n");
         continue;
       }
     }
@@ -410,7 +410,7 @@ void raspunde(void *arg)
       perror("[server]Error at read()\n");
     }
 
-    printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
+   // printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
     /*======================================================================*/
     /*                           CLOSE PARABOLA                             */
@@ -561,6 +561,7 @@ void raspunde(void *arg)
         perror("[server]Error at write\n");
       }        
       }
+      continue;
     }
     else
     /*===================================================================================*/
@@ -659,6 +660,7 @@ void raspunde(void *arg)
 
         }
       }
+      continue;
     }
     else
     if(strcmp(msg_recive,"help")==0)
@@ -726,6 +728,7 @@ void raspunde(void *arg)
         perror("[server]Error at write()\n");
       }
       fclose(helpf);
+      continue;
     }else
     /*=========================================================================================*/
     /*                                    CLOSE                                                */
@@ -749,6 +752,7 @@ void raspunde(void *arg)
         perror("[server]Error at write()\n");
       }
       printf("[server]Client on thread %d is closing\n",tdL.idThread);
+      continue;
     }
     /*=====================================================================================*/
     /*                                UNKNOWN COMMAND                                      */
@@ -769,6 +773,7 @@ void raspunde(void *arg)
       {
         perror("[server]Error at write()\n");
       }
+      continue;
     }
   } 
   printf("[server]Closing client on thread %d is closing\n",tdL.idThread);

@@ -241,7 +241,7 @@ int main (int argc, char *argv[])
               continue;
             }
             else
-            {
+            {///default msg to server_child
               bzero(&size_msg_server_child,sizeof(int));
               bzero(msg_server_child,1024*sizeof(char));
               strcpy(msg_server_child,"none");size_msg_server_child=strlen(msg_server_child)+1;
@@ -282,7 +282,7 @@ int main (int argc, char *argv[])
 
 
           ///default msg to server_child
-          bzero(&size_msg_server_child,sizeof(int));
+         /* bzero(&size_msg_server_child,sizeof(int));
           bzero(msg_server_child,1024*sizeof(char));        
           strcpy(msg_server_child,"none");size_msg_server_child=strlen(msg_server_child)+1;
 
@@ -293,7 +293,7 @@ int main (int argc, char *argv[])
           if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
           {
             perror("[client_child]Error at write\n");
-          }
+          }*/
         }
 
       } 
@@ -511,6 +511,7 @@ int main (int argc, char *argv[])
 
         printf("%s\n",msg_recive);
       }
+      continue;
     }else
     /*==============================================================*/
     /*                          HELP                                */
@@ -549,6 +550,7 @@ int main (int argc, char *argv[])
     if(strcmp(msg_recive,"Unable to send help :(")==0)
     {
       printf("[client]Unable to print help\n");
+      continue;
     }
     /*====================================================================*/
     /*                      Info about a VM                               */
@@ -583,6 +585,7 @@ int main (int argc, char *argv[])
 
         printf("[client]%s\n",msg_recive);///printing msg
       }
+      continue;
     }
     /*===================================================================*/
     /*                      ERRORS/DATA NOT FOUND                        */
