@@ -681,7 +681,7 @@ void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float
     if (tree == nullptr) {
         return;
     }
-
+    printf("Name : %s\n",tree->name);
     // Draw the circle
     sf::CircleShape circle(40);
     circle.setPosition(x - circle.getRadius(), y - circle.getRadius());
@@ -723,7 +723,6 @@ void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>*con,int x)
       sp=x/(con->size()+1);
       for (int i = 0; i < con->size(); i++) 
       {
-        printf("Name : %s ID : %d\n",con->at(i)->name,i);
         GraphDraw(window, con->at(i), sp * (i+1),50,200,100);
       }
     }
