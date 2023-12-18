@@ -46,6 +46,7 @@ int get_Port()
     return port;
 };
 
+
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
 
@@ -80,7 +81,7 @@ struct Tree_vms
   char name[256];
   std::vector<Tree_vms*>*connections;
 };
-
+void saveVMS(sqlite3* db, std::vector<vm_info*>& list_vm_info);
 std::vector<Tree_vms*>* hexagram();
 
 Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list);
@@ -309,8 +310,27 @@ void raspunde(void *arg)
         
         while (hon)
         {
+          bzero(&size_msg_client_child,sizeof(int));
+          bzero(msg_client_child,1024*sizeof(char));
+          if(read(clientSocket,&size_msg_client_child,sizeof(int))<0)
+          {
+            perror("[server_child]Error at read\n");
+          } 
+          if(read(clientSocket,msg_client_child,size_msg_client_child)<0)
+          {
+            perror("[server_child]Error at read\n");
+          }
+          
+          printf("[server_child]New msg from client\n");
+          if(strcmp(msg_client_child,"close hexagram")==0)
+          {
+            hon=0;
+            continue;
+          }
           if(std::chrono::steady_clock::now()>=send_again)
           {
+            send_again=std::chrono::steady_clock::now()+std::chrono::minutes(2);
+            printf("[server_child]New list\n");
             free(listT);listT=hexagram();
             bzero(&size_msg_client_child,sizeof(int));
             bzero(msg_client_child,1024*sizeof(char));
@@ -319,20 +339,13 @@ void raspunde(void *arg)
           }
           else
           {
+            printf("[server_child]Not a new list\n");
             bzero(&size_msg_client_child,sizeof(int));
             bzero(msg_client_child,1024*sizeof(char));
             strcpy(msg_client_child,"none");size_msg_client_child=strlen(msg_client_child)+1;            
+
           }
-          bzero(&size_msg_client_child,sizeof(int));
-          bzero(msg_client_child,1024*sizeof(char));
-          if(read(clientSocket,&size_msg_client_child,sizeof(int))>0 && read(clientSocket,msg_client_child,size_msg_client_child)>0)
-          {
-            if(strcmp(msg_client_child,"close hexagram")==0)
-            {
-              hon=0;
-              continue;
-            }
-          }
+      
         }
         
       }
@@ -747,7 +760,6 @@ int getProp_Type_Ident(char msg_recive[1024],char Prop_rez[256],char Type_rez[25
 {
   char *token=strtok(msg_recive," ");
   int word_nr=1;
-  printf("Got so far\n");
   while (token!=nullptr)
   {
     printf("Token %d : %s ",word_nr,token);
@@ -794,17 +806,8 @@ int getPropFromVM(char Prop[256],char Type[256],char Ident[256],char Rez[50][256
   }else
   if(strcmp(Type,"IP")==0)///ne conectam prin IP
   {
-    in_addr addr;
-    if(inet_pton(AF_INET,Ident,&addr)==1)
-    {
-      vm=virDomainLookupByUUIDString(con,Ident);
-    }
-      else
-      {
-        virConnectClose(con);
-        printf("[server]Could not find VM\n");
-        return -1;
-      }
+    vm=virDomainLookupByUUIDString(con,Ident);
+      
   }else
   if(strcmp(Type,"name")==0)///ne conectam prin nume
   {
@@ -1211,4 +1214,49 @@ int sendTree(int fd,Tree_vms*tree)
     sendTree(fd,tree->connections->at(i));
   }
   return 1;
+}
+
+
+void saveVMS(sqlite3* db, std::vector<vm_info*>& list_vm_info) {
+    char* errMsg = nullptr;
+
+    // Insert into SAVES table
+    std::string saveQuery = "INSERT INTO SAVES (DATA_SAVE) VALUES ('some_data');";
+    if (sqlite3_exec(db, saveQuery.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", errMsg);
+        sqlite3_free(errMsg);
+        return;  // Abort the function if SAVES insertion fails
+    }
+
+    // Get the last inserted ID_SAVE
+    int lastInsertId = sqlite3_last_insert_rowid(db);
+
+    // Iterate through the list_vm_info and insert data into VMSAVE and INTERFACES tables
+    for (auto& vm : list_vm_info) {
+        // Insert into VMSAVE table
+        std::string vmSaveQuery = "INSERT INTO VMSAVE (ID_SAVE, ID_VM, NAME, CPU_NUMBER, CPU_TIME, RAM, STATE, INTERFACE_NR, LOAD) VALUES (";
+        vmSaveQuery += std::to_string(lastInsertId) + ", ";
+        // Add other fields of vm_info structure to vmSaveQuery
+        // ...
+
+        if (sqlite3_exec(db, vmSaveQuery.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
+            fprintf(stderr, "SQL error: %s\n", errMsg);
+            sqlite3_free(errMsg);
+            return;  // Abort the function if VMSAVE insertion fails
+        }
+
+        // Insert into INTERFACES table
+        for (int i = 0; i < vm->interface_nr; ++i) {
+            std::string interfaceQuery = "INSERT INTO INTERFACES (ID_SAVE, ID_VM, INTERFACE_NAME, IP_ADDRESS) VALUES (";
+            interfaceQuery += std::to_string(lastInsertId) + ", ";
+            // Add other fields of vm_info structure to interfaceQuery
+            // ...
+
+            if (sqlite3_exec(db, interfaceQuery.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
+                fprintf(stderr, "SQL error: %s\n", errMsg);
+                sqlite3_free(errMsg);
+                return;  // Abort the function if INTERFACES insertion fails
+            }
+        }
+    }
 }

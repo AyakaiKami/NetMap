@@ -199,37 +199,71 @@ int main (int argc, char *argv[])
           sf::Event event;
           while (window.pollEvent(event)) 
           {
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
+              if (event.type == sf::Event::Closed) {
+                  window.close();
+              }
           }
-        bzero(&size_msg_server_child,sizeof(int));
-        bzero(msg_server_child,1024*sizeof(char));        
-        if(read(wpipe[0],&size_msg_server_child,sizeof(int))>0 && read(wpipe[0],msg_server_child,size_msg_server_child)>0)
-        {
-          if(strcmp(msg_server_child,"close hexagram")==0)
-          {
-            hon=1;
-            window.close();
-            bzero(&size_msg_server_child,sizeof(int));
-            bzero(msg_server_child,1024*sizeof(char));
-            strcpy(msg_server_child,"close hexagram");size_msg_server_child=strlen(msg_server_child)+1;
 
-            if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
-            {
-              perror("[client_child]Error at write\n");
-            }
-            if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
-            {
-              perror("[client_child]Error at write\n");
-            }
-            continue;
+          bzero(&size_msg_server_child,sizeof(int));
+          bzero(msg_server_child,1024*sizeof(char));        
+          if(read(wpipe[0],&size_msg_server_child,sizeof(int))<0 )
+          {
+            perror("[client_child]Error at read\n");
           }
-        }
-        bzero(&size_msg_server_child,sizeof(int));
-        bzero(msg_server_child,1024*sizeof(char));
-        if(read(sd_child,&size_msg_server_child,sizeof(int))>0 && read(sd_child,msg_server_child,size_msg_server_child)>0)
-        {
+          if(read(wpipe[0],msg_server_child,size_msg_server_child)<0)
+          {
+            perror("[client_child]Error at read\n");
+          }
+            
+            printf("Child Got: %s of %d\n",msg_server_child,size_msg_server_child);
+            if(strcmp(msg_server_child,"close hexagram")==0)
+            {
+              hon=1;
+              window.close();
+              bzero(&size_msg_server_child,sizeof(int));
+              bzero(msg_server_child,1024*sizeof(char));
+              strcpy(msg_server_child,"close hexagram");size_msg_server_child=strlen(msg_server_child)+1;
+
+              if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
+              {
+                perror("[client_child]Error at write\n");
+              }
+              if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
+              {
+                perror("[client_child]Error at write\n");
+              }
+              continue;
+            }
+            else
+            {
+              bzero(&size_msg_server_child,sizeof(int));
+              bzero(msg_server_child,1024*sizeof(char));
+              strcpy(msg_server_child,"none");size_msg_server_child=strlen(msg_server_child)+1;
+
+              if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
+              {
+                perror("[client_child]Error at write\n");
+              }
+              if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
+              {
+                perror("[client_child]Error at write\n");
+              }
+
+            }
+
+          
+
+
+
+          bzero(&size_msg_server_child,sizeof(int));
+          bzero(msg_server_child,1024*sizeof(char));
+          if(read(sd_child,&size_msg_server_child,sizeof(int))<0)
+          {perror("[client_child]Error at read\n");} 
+          
+          if(read(sd_child,msg_server_child,size_msg_server_child)<0)
+          {perror("[client_child]Error at read\n");}
+          
+          printf("Child Got from server: %s of %d\n",msg_server_child,size_msg_server_child);          
           if(strcmp(msg_server_child,"new list")==0)
           {
             free(list);list=getTreeList(sd_child);///getting the new list
@@ -237,27 +271,27 @@ int main (int argc, char *argv[])
             GraphDrawList(window,list,1200);
             window.display();
           }         
-        }             
+                       
 
 
-        ///default msg to server_child
-        bzero(&size_msg_server_child,sizeof(int));
-        bzero(msg_server_child,1024*sizeof(char));        
-        strcpy(msg_server_child,"none");size_msg_server_child=strlen(msg_server_child)+1;
+          ///default msg to server_child
+          bzero(&size_msg_server_child,sizeof(int));
+          bzero(msg_server_child,1024*sizeof(char));        
+          strcpy(msg_server_child,"none");size_msg_server_child=strlen(msg_server_child)+1;
 
-        if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
-        {
-          perror("[client_child]Error at write\n");
-        }
-        if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
-        {
-          perror("[client_child]Error at write\n");
-        }
-        }
-        
-      }
+          if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
+          {
+            perror("[client_child]Error at write\n");
+          }
+          if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
+          {
+            perror("[client_child]Error at write\n");
+          }
+          }
 
-      if(strcmp(msg_server_child,"parabola")==0)
+      } 
+
+      if  (strcmp(msg_server_child,"parabola")==0)
       {
         printf("Opening Parabola\n");
       }
