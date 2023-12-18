@@ -1,5 +1,5 @@
 Commands :
-    1. get <propriety> <type> <ident> 
+    1. get <propriety> <type> <ident>                              (done) 
         Propriety : CPU
                     RAM
                     name
@@ -9,17 +9,20 @@ Commands :
         Type : id
                ip
                name
-    2. list 
+    2. list                                                         (done)
         list IDs of all active VMs on the device
     3. parabol 
-        lists save identification and data of the save 
+        lists save identification and data of the save
+        (Lateralus : Parabol from Tool) 
     4. parabola 
         with function (close parabola)
         draws the graph associated with a save 
-    5.hexagram 
+        (Lateralus : Parabola from Tool)
+    5.hexagram                                                      (done)
         with function (close hexagram)
         draws the current graph changes every T minutes
+        (Deftones : Hexagram from Deftones)
     6.flash <save_identification> <ID> 
         prints all data on a VM previously saved 
-    7. help 
-    8. close
+    7. help                                                         (done)
+    8. close                                                        (done)
