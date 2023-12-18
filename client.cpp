@@ -203,7 +203,7 @@ int main (int argc, char *argv[])
                   window.close();
               }
           }
-
+          
           bzero(&size_msg_server_child,sizeof(int));
           bzero(msg_server_child,1024*sizeof(char));        
           if(read(wpipe[0],&size_msg_server_child,sizeof(int))<0 )
@@ -252,9 +252,6 @@ int main (int argc, char *argv[])
             }
 
           
-
-
-
           bzero(&size_msg_server_child,sizeof(int));
           bzero(msg_server_child,1024*sizeof(char));
           if(read(sd_child,&size_msg_server_child,sizeof(int))<0)
@@ -266,7 +263,8 @@ int main (int argc, char *argv[])
           printf("Child Got from server: %s of %d\n",msg_server_child,size_msg_server_child);          
           if(strcmp(msg_server_child,"new list")==0)
           {
-            free(list);list=getTreeList(sd_child);///getting the new list
+            free(list);
+            list=getTreeList(sd_child);///getting the new list
             window.clear();///draw
             GraphDrawList(window,list,1200);
             window.display();
