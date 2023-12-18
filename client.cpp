@@ -37,6 +37,9 @@ struct Tree_vms
 std::vector<Tree_vms*>*getTreeList(int fd);
 Tree_vms*getTree(int fd);
 
+void burnList(std::vector<Tree_vms*>*list);
+void burnTree(Tree_vms* tree);
+
 //void GraphDraw(sf::RenderWindow &window,Tree_vms* tree,int sx,int fx,int height);
 void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>*con,int x);
 void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float xOffset, float levelOffset);
@@ -267,12 +270,10 @@ int main (int argc, char *argv[])
           if(strcmp(msg_server_child,"new list")==0)
           {
             printf("[client_child]New list\n");
-            free(list);
+            burnList(list);
             list=getTreeList(sd_child);///getting the new list
             window->clear();///draw
-            free(window);
-            window=new sf::RenderWindow(sf::VideoMode(1200,800),"Hexagram");
-            free(list);
+            //window->close();
             GraphDrawList(*window,list,1200);
             window->display();
             continue;
@@ -714,7 +715,7 @@ void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float
 
         GraphDraw(window, tree->connections->at(i), xConnection, yConnection, xOffset * 0.5f, levelOffset * 1.5f);
     }
-}
+};
 
 void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>*con,int x) 
 {
@@ -727,4 +728,21 @@ void GraphDrawList(sf::RenderWindow &window,std::vector<Tree_vms*>*con,int x)
         GraphDraw(window, con->at(i), sp * (i+1),50,200,100);
       }
     }
-}
+};
+
+void burnList(std::vector<Tree_vms*>*list)
+{
+  for(int i=0;i<list->size();i++)
+  {
+    burnTree(list->at(i));
+  }
+  
+};
+void burnTree(Tree_vms* tree)
+{
+  for(int i=0;i<tree->connections->size();i++)
+    burnTree(tree->connections->at(i));
+  delete tree->connections;
+  
+  delete tree;
+};
