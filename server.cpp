@@ -326,16 +326,18 @@ void raspunde(void *arg)
             perror("[server_child]Error at read\n");
           }
           
-          printf("[server_child]New msg from client\n");
+          printf("[server_child]New msg from client \n %s of size %d\n",msg_client_child,size_msg_client_child);
           if(strcmp(msg_client_child,"close hexagram")==0)
           {
+            printf("[server_child]Closing hexagram\n");
             hon=0;
             continue;
           }
 
           auto end=std::chrono::steady_clock::now();
-          auto dif=std::chrono::duration_cast<std::chrono::minutes>(end-start);
-          if(dif.count()>=2)
+          auto dif=std::chrono::duration_cast<std::chrono::seconds>(end-start);
+          std::cout<<dif.count()<<std::endl;
+          if(dif.count()>=120)
           {
             start=std::chrono::steady_clock::now();
             printf("[server_child]New list\n");

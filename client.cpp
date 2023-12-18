@@ -131,6 +131,7 @@ int main (int argc, char *argv[])
     server_child.sin_addr.s_addr=inet_addr(argv[1]);
     server_child.sin_port=htons(port_c);
     printf("[client_child]Connecting on port %d\n",port_c);
+    sleep(1);
     if (connect (sd_child, (struct sockaddr *) &server_child,sizeof (struct sockaddr)) == -1)
     {
       perror ("[client_child]Eroare la connect().\n");
@@ -190,17 +191,17 @@ int main (int argc, char *argv[])
         printf("Opening Hexagram\n");
         int hon=1;
         std::vector<Tree_vms*>*list=getTreeList(sd_child);
-        sf::RenderWindow window(sf::VideoMode(1200,800),"Hexagram");
-        window.clear();
-        GraphDrawList(window,list,1200);
-        window.display();
-        while (hon && window.isOpen())
+        sf::RenderWindow *window=new sf::RenderWindow(sf::VideoMode(1200,800),"Hexagram");
+        window->clear();
+        GraphDrawList(*window,list,1200);
+        window->display();
+        while (hon && window->isOpen())
         {
           sf::Event event;
-          while (window.pollEvent(event)) 
+          while (window->pollEvent(event)) 
           {
               if (event.type == sf::Event::Closed) {
-                  window.close();
+                  window->close();
               }
           }
           
@@ -218,9 +219,10 @@ int main (int argc, char *argv[])
             printf("Child Got: %s of %d\n",msg_server_child,size_msg_server_child);
             if(strcmp(msg_server_child,"close hexagram")==0)
             {
+              printf("[server_child]Closing hexagram\n");
               hon=0;
-              window.close();
-              free(list);
+              window->close();
+              free(window);
               bzero(&size_msg_server_child,sizeof(int));
               bzero(msg_server_child,1024*sizeof(char));
               strcpy(msg_server_child,"close hexagram");size_msg_server_child=strlen(msg_server_child)+1;
@@ -264,11 +266,15 @@ int main (int argc, char *argv[])
           printf("Child Got from server: %s of %d\n",msg_server_child,size_msg_server_child);          
           if(strcmp(msg_server_child,"new list")==0)
           {
+            printf("New list\n");
             free(list);
             list=getTreeList(sd_child);///getting the new list
-            window.clear();///draw
-            GraphDrawList(window,list,1200);
-            window.display();
+            window->clear();///draw
+            free(window);
+            window=new sf::RenderWindow(sf::VideoMode(1200,800),"Hexagram");
+            free(list);
+            GraphDrawList(*window,list,1200);
+            window->display();
           }         
                        
 
