@@ -311,7 +311,7 @@ void raspunde(void *arg)
         int hon=1;
         std::vector<Tree_vms*>*listT=hexagram();
         sendTreeList(clientSocket,listT);
-        std::chrono::system_clock::time_point send_again=std::chrono::steady_clock::now()+std::chrono::minutes(2);
+        auto start=std::chrono::steady_clock::now();
         
         while (hon)
         {
@@ -333,11 +333,11 @@ void raspunde(void *arg)
             continue;
           }
 
-          
-          std::cout<<timePointAsString(send_again)<<
-          if(std::chrono::steady_clock::now()>=send_again)
+          auto end=std::chrono::steady_clock::now();
+          auto dif=std::chrono::duration_cast<std::chrono::minutes>(end-start);
+          if(dif.count()>=2)
           {
-            send_again=std::chrono::steady_clock::now()+std::chrono::minutes(1);
+            start=std::chrono::steady_clock::now();
             printf("[server_child]New list\n");
             free(listT);listT=hexagram();
             bzero(&size_msg_client_child,sizeof(int));
