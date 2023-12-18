@@ -218,8 +218,9 @@ int main (int argc, char *argv[])
             printf("Child Got: %s of %d\n",msg_server_child,size_msg_server_child);
             if(strcmp(msg_server_child,"close hexagram")==0)
             {
-              hon=1;
+              hon=0;
               window.close();
+              free(list);
               bzero(&size_msg_server_child,sizeof(int));
               bzero(msg_server_child,1024*sizeof(char));
               strcpy(msg_server_child,"close hexagram");size_msg_server_child=strlen(msg_server_child)+1;

@@ -18,6 +18,7 @@
 #include <map>
 #include <cstring>
 #include <chrono>
+#include <iostream>
 //#include <jsoncpp/json/json.h>
 /* portul folosit */
 #define PORT 2908
@@ -45,7 +46,12 @@ int get_Port()
     fclose(fd);
     return port;
 };
-
+std::string timePointAsString(const std::chrono::system_clock::time_point& tp) {
+    std::time_t t = std::chrono::system_clock::to_time_t(tp);
+    std::string ts = std::ctime(&t);
+    ts.resize(ts.size()-1);
+    return ts;
+}
 
 /* codul de eroare returnat de anumite apeluri */
 extern int errno;
@@ -302,11 +308,10 @@ void raspunde(void *arg)
 /*                           HEXAGRAM                                   */
       if(strcmp(msg_client_child,"hexagram")==0)
       {
-        sleep(1);
         int hon=1;
         std::vector<Tree_vms*>*listT=hexagram();
         sendTreeList(clientSocket,listT);
-        auto send_again=std::chrono::steady_clock::now()+std::chrono::minutes(2);
+        std::chrono::system_clock::time_point send_again=std::chrono::steady_clock::now()+std::chrono::minutes(2);
         
         while (hon)
         {
@@ -327,14 +332,25 @@ void raspunde(void *arg)
             hon=0;
             continue;
           }
+
+          
+          std::cout<<timePointAsString(send_again)<<
           if(std::chrono::steady_clock::now()>=send_again)
           {
-            send_again=std::chrono::steady_clock::now()+std::chrono::minutes(2);
+            send_again=std::chrono::steady_clock::now()+std::chrono::minutes(1);
             printf("[server_child]New list\n");
             free(listT);listT=hexagram();
             bzero(&size_msg_client_child,sizeof(int));
             bzero(msg_client_child,1024*sizeof(char));
             strcpy(msg_client_child,"new list");size_msg_client_child=strlen(msg_client_child)+1;
+            if(write(clientSocket,&size_msg_client_child,sizeof(int))<=0)
+            {
+              perror("[server-child]Error at write\n");
+            }
+            if(write(clientSocket,msg_client_child,size_msg_client_child)<=0)
+            {
+              perror("[server-child]Error at write\n");
+            }            
             sendTreeList(clientSocket,listT);
           }
           else
@@ -343,9 +359,15 @@ void raspunde(void *arg)
             bzero(&size_msg_client_child,sizeof(int));
             bzero(msg_client_child,1024*sizeof(char));
             strcpy(msg_client_child,"none");size_msg_client_child=strlen(msg_client_child)+1;            
-
+           if(write(clientSocket,&size_msg_client_child,sizeof(int))<=0)
+            {
+              perror("[server-child]Error at write\n");
+            }
+            if(write(clientSocket,msg_client_child,size_msg_client_child)<=0)
+            {
+              perror("[server-child]Error at write\n");
+            }            
           }
-      
         }
         
       }
