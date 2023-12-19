@@ -388,6 +388,24 @@ int main (int argc, char *argv[])
     }
     //printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+    /*===================================================================*/
+    /*                            PARABOL                               */
+    if(strcmp(msg_recive,"parabol")==0)
+    {
+      char Rez[1024];bzero(Rez,1024);
+      int size_Rez;bzero(&size_Rez,sizeof(int));
+
+      if(read(sd,&size_Rez,sizeof(int))<=0)
+      {
+        perror("[client]Error at read()\n");
+      }
+      if(read(sd,Rez,size_Rez)<=0)
+      {
+        perror("[client]Error at read()\n");
+      }
+      printf("%s",Rez);
+      continue;
+    }else
     /*==================================================================*/
     /*                           CLOSE PARABOLA                         */
      if(strcmp(msg_recive,"close parabola")==0)

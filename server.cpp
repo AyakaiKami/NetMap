@@ -103,6 +103,8 @@ int sendTreeList(int fd,std::vector<Tree_vms*>*list);
 int sendTree(int fd,Tree_vms*tree);
 
 int parabolCallBack(void* data, int argc, char** argv, char** azColName);
+
+int parabol(char Rez[1024]);
 ///====================================START==============================================================
 
 int main ()
@@ -409,6 +411,39 @@ void raspunde(void *arg)
 
    // printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+
+    if(strcmp(msg_recive,"parabol")==0)
+    {
+      char Rez[1024];parabol(Rez);
+      bzero(&size_msg_send,sizeof(int));///cleaning send vars
+      bzero(msg_send,1024*sizeof(char));
+
+      strcpy(msg_send,"parabol");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+
+      int size_Rez;bzero(&size_Rez,sizeof(int));
+      size_Rez=strlen(Rez)+1;
+      if(write(tdL.cl,&size_Rez,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,Rez,size_Rez)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      continue;
+    }
+    else
     /*======================================================================*/
     /*                           CLOSE PARABOLA                             */
    if(strcmp(msg_recive,"close parabola")==0)
@@ -1059,7 +1094,7 @@ vm_info* vm_data_make(virDomainPtr vm)
 int parabol(char Rez[1024])
 {
 
-  std::vector<std::string> resultArray  ;
+  std::vector<char*> resultArray  ;
   sqlite3* db;
   int rc;
   rc = sqlite3_open("saves.db", &db);  
@@ -1081,8 +1116,8 @@ int parabol(char Rez[1024])
   bzero(Rez,1024*sizeof(char));strcpy(Rez,"");
   for(int i=0;i<resultArray.size();i++)
   {
-    char end[1024];
-    sprintf(end,"%s %d\n",resultArray[i])
+    strcat(Rez,resultArray[i]);
+    strcat(Rez,"\n");
   }
 
   return 1;
@@ -1331,11 +1366,9 @@ void saveVMS(std::vector<vm_info*> list_vm_info)
 
 int parabolCallBack(void* data, int argc, char** argv, char** azColName)
 {
-  std::vector<std::string>*rezArray=static_cast<std::vector<std::string>*>(data);
-  std::string cop;
-  for(int i=0;i<argc;i++)
-  {
-    if(strcmp(azColName[i],"id_save"))
-    
-  }
+  std::vector<char*>*rezArray=static_cast<std::vector<char*>*>(data);
+  char *cop;
+  sprintf(cop,"%s : %s",argv[0],argv[1]);
+  rezArray->push_back(cop);
+  return 0;
 }
