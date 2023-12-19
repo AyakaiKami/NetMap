@@ -140,7 +140,7 @@ int main (int argc, char *argv[])
       perror ("[client_child]Eroare la connect().\n");
       return errno;
     }
-    printf("[client_child]Connected\n");
+    //printf("[client_child]Connected\n");
     /*==========================================================================*/
     /*                                 Child Connected                          */
     int on=1;int hon=0;
@@ -191,7 +191,7 @@ int main (int argc, char *argv[])
       }
       if(strcmp(msg_server_child,"hexagram")==0)
       {
-        printf("Opening Hexagram\n");
+        ///printf("Opening Hexagram\n");
         int hon=1;
         std::vector<Tree_vms*>*list=getTreeList(sd_child);
         sf::RenderWindow *window=new sf::RenderWindow(sf::VideoMode(1200,800),"Hexagram");
@@ -219,10 +219,10 @@ int main (int argc, char *argv[])
             perror("[client_child]Error at read\n");
           }
             
-            printf("Child Got: %s of %d\n",msg_server_child,size_msg_server_child);
+            //printf("Child Got: %s of %d\n",msg_server_child,size_msg_server_child);
             if(strcmp(msg_server_child,"close hexagram")==0)
             {
-              printf("[server_child]Closing hexagram\n");
+              //printf("[server_child]Closing hexagram\n");
               hon=0;
               window->close();
               free(window);
@@ -266,10 +266,10 @@ int main (int argc, char *argv[])
           if(read(sd_child,msg_server_child,size_msg_server_child)<0)
           {perror("[client_child]Error at read\n");}
           
-          printf("Child Got from server: %s of %d\n",msg_server_child,size_msg_server_child);          
+          ///printf("Child Got from server: %s of %d\n",msg_server_child,size_msg_server_child);          
           if(strcmp(msg_server_child,"new list")==0)
           {
-            printf("[client_child]New list\n");
+            //printf("[client_child]New list\n");
             burnList(list);
             list=getTreeList(sd_child);///getting the new list
             window->clear();///draw
@@ -686,7 +686,7 @@ void GraphDraw(sf::RenderWindow& window, Tree_vms* tree, float x, float y, float
     if (tree == nullptr) {
         return;
     }
-    printf("Name : %s\n",tree->name);
+    //printf("Name : %s\n",tree->name);
     // Draw the circle
     sf::CircleShape circle(40);
     circle.setPosition(x - circle.getRadius(), y - circle.getRadius());

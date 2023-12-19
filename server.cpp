@@ -84,7 +84,7 @@ struct Tree_vms
   char name[256];
   std::vector<Tree_vms*>*connections;
 };
-void saveVMS(std::vector<vm_info*>& list_vm_info);
+void saveVMS(std::vector<vm_info*> list_vm_info);
 std::vector<Tree_vms*>* hexagram();
 
 Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list);
@@ -102,7 +102,7 @@ int sendTreeList(int fd,std::vector<Tree_vms*>*list);
 
 int sendTree(int fd,Tree_vms*tree);
 
-
+int parabolCallBack(void* data, int argc, char** argv, char** azColName);
 ///====================================START==============================================================
 
 int main ()
@@ -330,7 +330,6 @@ void raspunde(void *arg)
             hon=0;
             continue;
           }
-
           auto end=std::chrono::steady_clock::now();
           auto dif=std::chrono::duration_cast<std::chrono::seconds>(end-start);
           std::cout<<dif.count()<<std::endl;
@@ -368,10 +367,8 @@ void raspunde(void *arg)
             }            
           }
         }
-        
       }
-
-      if(strcmp(msg_client_child,"close")==0)
+       if(strcmp(msg_client_child,"close")==0)
       {
         on=0;
         printf("[server_child]Closing\n");
@@ -1059,8 +1056,34 @@ vm_info* vm_data_make(virDomainPtr vm)
 }
 
 
-int parabola(char msg_recive[1024],char Rez[1024])
+int parabol(char Rez[1024])
 {
+
+  std::vector<std::string> resultArray  ;
+  sqlite3* db;
+  int rc;
+  rc = sqlite3_open("saves.db", &db);  
+  if (rc) {
+      // Error handling if the database couldn't be opened
+      std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+      exit(EXIT_FAILURE);
+  }
+  const char* sql = "SELECT id_save, date_save FROM saves_vm;";
+
+  // Execute the SQL statement and invoke selectCallback for each row
+  rc = sqlite3_exec(db, sql, parabolCallBack, &resultArray, 0); 
+  if (rc != SQLITE_OK) {
+      std::cerr << "SQL error: " << sqlite3_errmsg(db) << std::endl;
+  }
+  // Close the database
+  sqlite3_close(db);
+
+  bzero(Rez,1024*sizeof(char));strcpy(Rez,"");
+  for(int i=0;i<resultArray.size();i++)
+  {
+    char end[1024];
+    sprintf(end,"%s %d\n",resultArray[i])
+  }
 
   return 1;
 };
@@ -1135,7 +1158,7 @@ std::vector<Tree_vms*>* hexagram()
   
   ///parcurgem fiecare vm
   std::vector<vm_info*>list_vm_info;
-  saveVMS(list_vm_info);
+  
   for(int i=0;i<nr_vms;i++)
   {
     virDomainPtr vmp=virDomainLookupByID(con,ListdomainID[i]);
@@ -1144,6 +1167,8 @@ std::vector<Tree_vms*>* hexagram()
   }
   virConnectClose(con);
 
+  saveVMS(list_vm_info);
+  
   std::vector<Tree_vms*>*VMconnections =new std::vector<Tree_vms*>();
   std::vector<int>marked_list;
   for(int i=0;i<list_vm_info.size();i++)
@@ -1213,7 +1238,6 @@ int sendTreeList(int fd,std::vector<Tree_vms*>*list)
   return 1;
 };
 
-
 int sendTree(int fd,Tree_vms*tree)
 {
   char name[1024];int name_size;
@@ -1243,64 +1267,75 @@ int sendTree(int fd,Tree_vms*tree)
   return 1;
 }
 
-std::string getCurrentDateAsString() {
-    // Get the current time point
-    auto now = std::chrono::system_clock::now();
-
-    // Convert the time point to a time_t object
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-
-    // Convert the time_t to a struct tm in local time
-    std::tm* localTime = std::localtime(&currentTime);
-
-    // Format the struct tm into a string
-    std::ostringstream oss;
-    oss << std::put_time(localTime, "%Y-%m-%d"); // Customize the format as needed
-    return oss.str();
-}
-
-void saveVMS(std::vector<vm_info*>& list_vm_info) 
+void saveVMS(std::vector<vm_info*> list_vm_info) 
 {
-  char* errMsg = nullptr;
-  
-/*
-    // Insert into SAVES table
-    std::string saveQuery = "INSERT INTO SAVES (DATA_SAVE) VALUES ('some_data');";
-    if (sqlite3_exec(db, saveQuery.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", errMsg);
-        sqlite3_free(errMsg);
-        return;  // Abort the function if SAVES insertion fails
+    char* errMsg = nullptr;
+    sqlite3* db;
+    int rc;
+    rc = sqlite3_open("saves.db", &db);
+
+    if (rc) {
+        // Error handling if the database couldn't be opened
+        printf("Can't open database: %s\n", sqlite3_errmsg(db));
+        exit(EXIT_FAILURE);
     }
 
-    // Get the last inserted ID_SAVE
-    int lastInsertId = sqlite3_last_insert_rowid(db);
+    std::time_t now = std::time(nullptr);
+    std::tm date_save = *std::localtime(&now);
+    std::stringstream ss;
+    ss << std::put_time(&date_save, "%Y-%m-%d %H:%M:%S");
+    std::string formattedDateTime = ss.str();
 
-    // Iterate through the list_vm_info and insert data into VMSAVE and INTERFACES tables
-    for (auto& vm : list_vm_info) {
-        // Insert into VMSAVE table
-        std::string vmSaveQuery = "INSERT INTO VMSAVE (ID_SAVE, ID_VM, NAME, CPU_NUMBER, CPU_TIME, RAM, STATE, INTERFACE_NR, LOAD) VALUES (";
-        vmSaveQuery += std::to_string(lastInsertId) + ", ";
-        // Add other fields of vm_info structure to vmSaveQuery
-        // ...
+    // Construct the SQL statement with a parameter
+    char stmt[1024];
+    sprintf(stmt,"INSERT INTO saves_vm (date_save) VALUES ('%s');",formattedDateTime.c_str());
+    rc = sqlite3_exec(db, stmt, 0, 0, &errMsg);
 
-        if (sqlite3_exec(db, vmSaveQuery.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
-            fprintf(stderr, "SQL error: %s\n", errMsg);
-            sqlite3_free(errMsg);
-            return;  // Abort the function if VMSAVE insertion fails
+    if (rc != SQLITE_OK) {
+        printf("Error inserting save: %s\n", errMsg);
+        sqlite3_free(errMsg);
+    }
+    ///get id of the save
+    int lastInsertId = static_cast<int>(sqlite3_last_insert_rowid(db));
+    
+    ///insert vms
+    for(int i=0;i<list_vm_info.size();i++)
+    {
+      bzero(stmt,1024*sizeof(char));
+      sprintf(stmt,"INSERT INTO vm_list (id_save,name,CPU_number,CPU_time,RAM,state,interface_nr,load) VALUES (%d,'%s','%s','%s','%s','%s',%d,'%s');",
+      lastInsertId,list_vm_info[i]->name,list_vm_info[i]->CPU_number,list_vm_info[i]->CPU_time,list_vm_info[i]->RAM,list_vm_info[i]->state,list_vm_info[i]->interface_nr,list_vm_info[i]->load);
+      rc = sqlite3_exec(db, stmt, 0, 0, &errMsg);
+      if (rc != SQLITE_OK) 
+      {
+        printf("Error inserting save: %s\n", errMsg);
+        sqlite3_free(errMsg);
+      }      
+      ///interfaces
+      for(int j=0;j<list_vm_info[i]->interface_nr;j++)
+      {
+        bzero(stmt,1024*sizeof(char));
+        sprintf(stmt,"INSERT INTO vm_interface (id_save,name,interface,IP) VALUES (%d,'%s','%s','%s');",lastInsertId,list_vm_info[i]->name,list_vm_info[i]->interface_list[j],list_vm_info[i]->ip_address[j]);
+        rc=sqlite3_exec(db,stmt,0,0,&errMsg);
+        if(rc!=SQLITE_OK)
+        {
+          printf("Error inserting save: %s\n", errMsg);
+          sqlite3_free(errMsg);
         }
+      }
+    }
+    
+    // Close the database
+    sqlite3_close(db);
+};
 
-        // Insert into INTERFACES table
-        for (int i = 0; i < vm->interface_nr; ++i) {
-            std::string interfaceQuery = "INSERT INTO INTERFACES (ID_SAVE, ID_VM, INTERFACE_NAME, IP_ADDRESS) VALUES (";
-            interfaceQuery += std::to_string(lastInsertId) + ", ";
-            // Add other fields of vm_info structure to interfaceQuery
-            // ...
 
-            if (sqlite3_exec(db, interfaceQuery.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
-                fprintf(stderr, "SQL error: %s\n", errMsg);
-                sqlite3_free(errMsg);
-                return;  // Abort the function if INTERFACES insertion fails
-            }
-        }
-    }*/
+int parabolCallBack(void* data, int argc, char** argv, char** azColName)
+{
+  std::vector<std::string>*rezArray=static_cast<std::vector<std::string>*>(data);
+  std::string cop;
+  for(int i=0;i<argc;i++)
+  {
+    if(strcmp(azColName[i],"id_save"))
+    
+  }
 }
