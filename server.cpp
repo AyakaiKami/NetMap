@@ -378,7 +378,53 @@ void raspunde(void *arg)
           }
         }
       }
-      
+/*================================================================================*/
+/*                           PARABOLA                                     */
+
+      if(strncmp(msg_client_child,"parabola",strlen("parabola"))==0)
+      {
+        int id_save;
+        ///get id_save
+        int ind=strlen("parabola");
+        while(msg_client_child[ind]==' ')
+        {
+          ind++;
+        }
+        char nr[11];int inr=0;
+        while(msg_client_child[ind]>='0' && msg_client_child[ind]<='9')
+        {
+          nr[inr]=msg_client_child[ind];
+        }
+        id_save=atoi(nr);
+
+        std::vector<Tree_vms*>*list=parabola(id_save);
+        sendTreeList(clientSocket,list);
+        int pton=1;
+        while (pton)
+        {
+          if(read(clientSocket,&size_msg_client_child,sizeof(int))<=0)
+          {
+            perror("[server_child]Read \n");
+            close(clientSocket);
+            exit(EXIT_FAILURE);
+          }
+          if(read(clientSocket,msg_client_child,size_msg_client_child)<=0)
+          {
+            perror("[server_child]Read \n");
+            close(clientSocket);
+            exit(EXIT_FAILURE);
+          }
+          
+          if(strcmp(msg_client_child,"close parabola")==0)
+          {
+            printf("Closing parabola\n");
+            pton=0;
+            continue;
+          }
+        }
+      }
+/*==========================================================================*/
+/*                             CLOSE                                    */
       if(strcmp(msg_client_child,"close")==0)
       {
         on=0;
@@ -478,12 +524,12 @@ void raspunde(void *arg)
     }else        
     /*======================================================================*/
     /*                              PARABOLA                                */
-   if(strcmp(msg_recive,"parabola")==0)
+   if(strncmp(msg_recive,"parabola",strlen("parabola"))==0)
     {
       bzero(&size_msg_send,sizeof(int));///cleaning send vars
       bzero(msg_send,1024*sizeof(char));
 
-      strcpy(msg_send,"parabola");
+      strcpy(msg_send,msg_recive);
       size_msg_send=strlen(msg_send)+1;
       printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
 

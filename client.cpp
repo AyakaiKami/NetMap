@@ -226,6 +226,7 @@ int main (int argc, char *argv[])
               hon=0;
               window->close();
               free(window);
+              burnList(list);
               bzero(&size_msg_server_child,sizeof(int));
               bzero(msg_server_child,1024*sizeof(char));
               strcpy(msg_server_child,"close hexagram");size_msg_server_child=strlen(msg_server_child)+1;
@@ -279,12 +280,31 @@ int main (int argc, char *argv[])
             continue;
           }         
                        
+        }
 
-
-          ///default msg to server_child
-         /* bzero(&size_msg_server_child,sizeof(int));
+      } 
+/*====================================PARABOLA======================================*/
+      if  (strncmp(msg_server_child,"parabola",strlen("parabola"))==0)
+      {
+        printf("Opening Parabola\n");
+        int pton=1;
+        std::vector<Tree_vms*>*list=getTreeList(sd_child);
+        sf::RenderWindow *window=new sf::RenderWindow(sf::VideoMode(1200,800),"Parabola");
+        window->clear();
+        GraphDrawList(*window,list,1200);
+        window->display();
+        while (pton)
+        {
+          bzero(&size_msg_server_child,sizeof(int));
           bzero(msg_server_child,1024*sizeof(char));        
-          strcpy(msg_server_child,"none");size_msg_server_child=strlen(msg_server_child)+1;
+          if(read(wpipe[0],&size_msg_server_child,sizeof(int))<0 )
+          {
+            perror("[client_child]Error at read\n");
+          }
+          if(read(wpipe[0],msg_server_child,size_msg_server_child)<0)
+          {
+            perror("[client_child]Error at read\n");
+          }
 
           if(write(sd_child,&size_msg_server_child,sizeof(int))<=0)
           {
@@ -293,14 +313,19 @@ int main (int argc, char *argv[])
           if(write(sd_child,msg_server_child,size_msg_server_child)<=0)
           {
             perror("[client_child]Error at write\n");
-          }*/
+          }
+
+          if(strcmp(msg_server_child,"close parabola")==0)
+          {
+            pton=0;
+            window->clear();
+            window->close();
+            free(window);
+            burnList(list);
+            continue;
+          }          
         }
-
-      } 
-
-      if  (strcmp(msg_server_child,"parabola")==0)
-      {
-        printf("Opening Parabola\n");
+        
       }
     }
     
@@ -314,7 +339,7 @@ int main (int argc, char *argv[])
   /*==============================PARENT==================================*/
   close(wpipe[0]);
   close(rpipe[1]);
-  int hon=0;
+  int hon=0;int pton=0;
   int port_empty;
   if(read(sd,&port_empty,sizeof(int))<0)
   {
@@ -386,6 +411,23 @@ int main (int argc, char *argv[])
         perror("[client]Error write\n");
       }  
     }
+
+    if(pton==1)///default msg to child for parabola
+    {
+      char msg_child[1024];bzero(msg_child,1024*sizeof(char));
+      int size_msg_child;bzero(&size_msg_child,sizeof(int));
+
+      strcpy(msg_child,"none");size_msg_child=strlen(msg_child)+1;
+
+      if(write(wpipe[1],&size_msg_child,sizeof(int))<=0)
+      {
+        perror("[client]Error write\n");
+      }  
+      if(write(wpipe[1],msg_child,size_msg_child)<=0)
+      {
+        perror("[client]Error write\n");
+      }  
+    }
     //printf("[client]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
     /*===================================================================*/
@@ -429,12 +471,12 @@ int main (int argc, char *argv[])
     }else   
     /*==================================================================*/
     /*                            PARABOLA                              */
-    if(strcmp(msg_recive,"parabola")==0)
+    if(strncmp(msg_recive,"parabola",strlen("parabola"))==0)
     {
       bzero(&size_msg_to_child,sizeof(int));
       bzero(msg_to_child,1024*sizeof(char));
 
-      strcpy(msg_to_child,"parabola");
+      strcpy(msg_to_child,msg_recive);
       size_msg_to_child=strlen(msg_to_child)+1;
  
       if(write(wpipe[1],&size_msg_to_child,sizeof(int))<0)///sending port to child
