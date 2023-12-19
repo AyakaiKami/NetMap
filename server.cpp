@@ -1367,8 +1367,12 @@ void saveVMS(std::vector<vm_info*> list_vm_info)
 int parabolCallBack(void* data, int argc, char** argv, char** azColName)
 {
   std::vector<char*>*rezArray=static_cast<std::vector<char*>*>(data);
-  char *cop;
-  sprintf(cop,"%s : %s",argv[0],argv[1]);
-  rezArray->push_back(cop);
+  char* cop = static_cast<char*>(malloc(strlen(argv[0]) + strlen(argv[1]) + 4)); 
+
+  if (cop != nullptr)
+  {
+    sprintf(cop, "%s : %s", argv[0], argv[1]);
+    rezArray->push_back(cop);
+  }
   return 0;
 }
