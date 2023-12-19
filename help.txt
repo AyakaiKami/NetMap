@@ -1,5 +1,5 @@
 Commands :
-    1. get <propriety> <type> <ident>                              (done) 
+    1. get <propriety> <type> <ident>                               (done) 
         Propriety : CPU
                     RAM
                     name
@@ -11,10 +11,10 @@ Commands :
                name
     2. list                                                         (done)
         list IDs of all active VMs on the device
-    3. parabol 
+    3. parabol                                                      (done)
         lists save identification and data of the save
         (Lateralus : Parabol from Tool) 
-    4. parabola 
+    4. parabola <ID_SAVE>
         with function (close parabola)
         draws the graph associated with a save 
         (Lateralus : Parabola from Tool)

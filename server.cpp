@@ -79,19 +79,22 @@ struct vm_info
   char load[256];
 
 };
+
 struct Tree_vms
 {
   char name[256];
   std::vector<Tree_vms*>*connections;
 };
+
 void saveVMS(std::vector<vm_info*> list_vm_info);
+
 std::vector<Tree_vms*>* hexagram();
 
 Tree_vms* makeGraph(vm_info &current_vm,std::vector<vm_info*>&list_vm_info,std::vector<int>&marked_list);
 
 vm_info* vm_data_make(virDomainPtr vm);
 
-int parabola(char msg_recive[1024],char Rez[1024]);
+std::vector<Tree_vms*>* parabola(int id_save);
 
 int list_vms(char Rez[25][1024]);
 
@@ -105,6 +108,11 @@ int sendTree(int fd,Tree_vms*tree);
 int parabolCallBack(void* data, int argc, char** argv, char** azColName);
 
 int parabol(char Rez[1024]);
+
+
+int intf_parabolaCallBack(void* data, int argc, char** argv, char** azColName);
+
+
 ///====================================START==============================================================
 
 int main ()
@@ -370,12 +378,15 @@ void raspunde(void *arg)
           }
         }
       }
-       if(strcmp(msg_client_child,"close")==0)
+      
+      if(strcmp(msg_client_child,"close")==0)
       {
         on=0;
         printf("[server_child]Closing\n");
         continue;
       }
+
+
     }
     
     close(wpipe[0]);
@@ -1103,13 +1114,16 @@ int parabol(char Rez[1024])
       std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
       exit(EXIT_FAILURE);
   }
-  const char* sql = "SELECT id_save, date_save FROM saves_vm;";
+  const char* stmt = "SELECT id_save, date_save FROM saves_vm;";
 
   // Execute the SQL statement and invoke selectCallback for each row
-  rc = sqlite3_exec(db, sql, parabolCallBack, &resultArray, 0); 
-  if (rc != SQLITE_OK) {
-      std::cerr << "SQL error: " << sqlite3_errmsg(db) << std::endl;
+  rc = sqlite3_exec(db, stmt, parabolCallBack, &resultArray, 0); 
+  if (rc != SQLITE_OK) 
+  {
+    printf("SQL error: %s\n",sqlite3_errmsg(db));
+    exit(EXIT_FAILURE);
   }
+  
   // Close the database
   sqlite3_close(db);
 
@@ -1158,20 +1172,6 @@ int list_vms(char rez[25][1024])
 }
 
 
-int insert_vm_info(vm_info vm_in)
-{
-  sqlite3 *data_base;
-
-  if(sqlite3_open("",&data_base)!=SQLITE_OK)
-  {
-    printf("[server]Failed to open database\n");
-    return -1;
-  }
-
-  char stmt[1024];
-  //strcpy(stmt,"insert into table VM_table () values ();",vm_in.name,);
-  return 1;
-};
 
 std::vector<Tree_vms*>* hexagram()
 {
@@ -1376,3 +1376,101 @@ int parabolCallBack(void* data, int argc, char** argv, char** azColName)
   }
   return 0;
 }
+
+int parabolaCallBack(void* data, int argc, char** argv, char** azColName)
+{
+  std::vector<vm_info*>* rezArray=static_cast<std::vector<vm_info*>*>(data);
+
+  vm_info*cop=new vm_info;
+
+  strcpy(cop->name,argv[1]);
+  strcpy(cop->CPU_number, argv[2]);
+  strcpy(cop->CPU_time, argv[3]);
+  strcpy(cop->RAM, argv[4]);
+  strcpy(cop->state, argv[5]);
+  cop->interface_nr = atoi(argv[6]); // Convert interface_nr to int
+  strcpy(cop->load, argv[7]);
+  
+  rezArray->push_back(cop);
+  return 0;
+}
+
+std::vector<Tree_vms*>* parabola(int id_save)
+{
+  sqlite3 *db;
+  int rc;
+  rc=sqlite3_open("saves.db",&db);
+  if(rc)
+  {
+    printf("Can't open database: %s\n",sqlite3_errmsg(db));
+    exit(EXIT_FAILURE);
+  }
+
+  std::vector<vm_info*>list_vm_info;
+
+  char stmt[1024];
+
+  sprintf(stmt,"SELECT * FROM vm_list WHERE id_save = %d ;",id_save);
+
+  rc=sqlite3_exec(db,stmt,parabolaCallBack,&list_vm_info,0);
+
+  if (rc != SQLITE_OK) 
+  {
+    printf("SQL error: %s\n",sqlite3_errmsg(db));
+    exit(EXIT_FAILURE);
+  }
+
+  for(int i=0;i<list_vm_info.size();i++)
+  {
+    if(list_vm_info[i]->interface_nr>0)
+    {
+      bzero(stmt,1024);
+      sprintf(stmt,"SELECT * FROM vm_interface WHERE id_save = %d AND name LIKE '%s';",id_save,list_vm_info[i]->name);
+      std::vector<std::pair<char*,char*>>if_ip;
+      rc=sqlite3_exec(db,stmt,intf_parabolaCallBack,&if_ip,0);
+      if (rc != SQLITE_OK) 
+      {
+        printf("SQL error: %s\n",sqlite3_errmsg(db));
+        exit(EXIT_FAILURE);
+      }
+      for(int j=0;j<if_ip.size();j++)
+      {
+        strcpy(list_vm_info[i]->interface_list[j],if_ip[j].first);
+        strcpy(list_vm_info[i]->ip_address[j],if_ip[j].second);
+      }
+    }
+  }
+
+  sqlite3_close(db);
+
+  std::vector<Tree_vms*>*VMconnections =new std::vector<Tree_vms*>();
+  std::vector<int>marked_list;
+  for(int i=0;i<list_vm_info.size();i++)
+  {
+    marked_list.push_back(0);
+  }
+
+  for(int i=0;i<list_vm_info.size();i++)
+  {
+    if(marked_list[i]==0)
+    {
+      VMconnections->push_back(makeGraph(*list_vm_info[i],list_vm_info,marked_list));
+    }
+  }
+  return VMconnections;
+};
+
+int intf_parabolaCallBack(void* data, int argc, char** argv, char** azColName)
+{
+  std::vector<std::pair<char*,char*>>*rez_pair=static_cast<std::vector<std::pair<char*,char*>>*>(data);
+  std::pair<char*,char*>*cop=new std::pair<char*,char*>;
+ 
+  cop->first = new char[strlen(argv[2]) + 1];
+  strcpy(cop->first, argv[2]);
+
+  cop->second = new char[strlen(argv[3]) + 1];
+  strcpy(cop->second, argv[3]);
+  
+  rez_pair->push_back(*cop);
+  return 0;
+};
