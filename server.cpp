@@ -112,6 +112,7 @@ int parabol(char Rez[1024]);
 
 int intf_parabolaCallBack(void* data, int argc, char** argv, char** azColName);
 
+void flash(char *msg_recive,char *Rez);
 
 ///====================================START==============================================================
 
@@ -470,7 +471,41 @@ void raspunde(void *arg)
 
    // printf("[server]Got %s of size %d\n",msg_recive,size_msg_recive);
     ///Analizam raspunsul:
+/*=======================================================================*/
+/*                             FLASH                                     */
+    if(strncmp(msg_recive,"flash",strlen("flash"))==0)
+    {
+      
+      strcpy(msg_send,"flash");
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
 
+      char Rez[1024];
+      flash(msg_recive,Rez);
+
+      strcpy(msg_send,Rez);
+      size_msg_send=strlen(msg_send)+1;
+      printf("[server]Sending %s of size %d\n",msg_send,size_msg_send);
+      if(write(tdL.cl,&size_msg_send,sizeof(int))<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      if(write(tdL.cl,msg_send,size_msg_send)<0)
+      {
+        perror("[server]Error at write()\n");
+      }
+      continue;
+    }else
+/*=======================================================================*/
+/*                          PARABOLA                                        */
     if(strcmp(msg_recive,"parabol")==0)
     {
       char Rez[1024];parabol(Rez);
@@ -1521,4 +1556,88 @@ int intf_parabolaCallBack(void* data, int argc, char** argv, char** azColName)
   
   rez_pair->push_back(*cop);
   return 0;
+};
+
+void flash(char *msg_recive,char *Rez)
+{
+
+  int ind=strlen("flash");
+
+  while(msg_recive[ind]==' ')
+  {
+    ind++;
+  }
+
+  char nr[11];int inr=0;
+  while(msg_recive[ind]>='0' && msg_recive[ind]<='9')
+  {
+    nr[inr]=msg_recive[ind];
+    ind++;inr++;
+  }
+  nr[inr]='\0';
+  int id_save=atoi(nr);
+
+  while(msg_recive[ind]==' ')
+  {
+    ind++;
+  }
+
+  char name[256];int inn=0;
+  while (msg_recive[ind]!='\0')
+  {
+    name[inn]=msg_recive[ind];
+    inn++;ind++;
+  }
+  name[inn]='\0';
+
+  sqlite3 *db;
+  int rc;
+  rc=sqlite3_open("saves.db",&db);
+  if(rc)
+  {
+    printf("Can't open database: %s\n",sqlite3_errmsg(db));
+    exit(EXIT_FAILURE);
+  }  
+  char stmt[1024];
+  sprintf(stmt,"SELECT * FROM vm_LIST WHERE id_save = %d AND name LIKE '%s';",id_save,name);
+  std::vector<vm_info*>list_vm_info;
+
+  rc=sqlite3_exec(db,stmt,parabolaCallBack,&list_vm_info,0);
+  
+  if(list_vm_info[0]->interface_nr>0)
+  {
+    bzero(stmt,1024);
+    sprintf(stmt,"SELECT * FROM vm_interface WHERE id_save = %d AND name LIKE '%s';",id_save,list_vm_info[0]->name);
+    std::vector<std::pair<char*,char*>>if_ip;
+    rc=sqlite3_exec(db,stmt,intf_parabolaCallBack,&if_ip,0);
+    if (rc != SQLITE_OK) 
+    {
+      printf("SQL error: %s\n",sqlite3_errmsg(db));
+      exit(EXIT_FAILURE);
+    }
+    for(int j=0;j<if_ip.size();j++)
+    {
+      strcpy(list_vm_info[0]->interface_list[j],if_ip[j].first);
+      strcpy(list_vm_info[0]->ip_address[j],if_ip[j].second);
+    }
+  }
+  sqlite3_close(db);
+
+  strcpy(Rez,"");
+  strcat(Rez,"name : "); strcat(Rez,list_vm_info[0]->name);strcat(Rez,"\n");
+  strcat(Rez,"CPU_number : "); strcat(Rez,list_vm_info[0]->CPU_number);strcat(Rez,"\n");
+  strcat(Rez,"CPU_time : "); strcat(Rez,list_vm_info[0]->CPU_time);strcat(Rez,"\n");
+  strcat(Rez,"RAM : "); strcat(Rez,list_vm_info[0]->RAM);strcat(Rez,"\n");
+  strcat(Rez,"State : "); strcat(Rez,list_vm_info[0]->state);strcat(Rez,"\n");
+  strcat(Rez,"Interface :\n");
+
+  for(int i=0;i<list_vm_info[0]->interface_nr;i++)
+  {
+    strcat(Rez,list_vm_info[0]->interface_list[i]);
+    strcat(Rez," : ");
+    strcat(Rez,list_vm_info[0]->ip_address[i]);
+    strcat(Rez,"\n");
+  }
+  strcat(Rez,"Load : "); strcat(Rez,list_vm_info[0]->load);strcat(Rez,"\n");
+
 };

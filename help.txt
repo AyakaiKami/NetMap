@@ -14,7 +14,7 @@ Commands :
     3. parabol                                                      (done)
         lists save identification and data of the save
         (Lateralus : Parabol from Tool) 
-    4. parabola <ID_SAVE>
+    4. parabola <ID_SAVE>                                           (done)
         with function (close parabola)
         draws the graph associated with a save 
         (Lateralus : Parabola from Tool)
@@ -22,7 +22,7 @@ Commands :
         with function (close hexagram)
         draws the current graph changes every T minutes
         (Deftones : Hexagram from Deftones)
-    6.flash <save_identification> <ID> 
+    6.flash <save_identification> <ID>                              (done)
         prints all data on a VM previously saved 
     7. help                                                         (done)
     8. close                                                        (done)
