@@ -394,7 +394,9 @@ void raspunde(void *arg)
         while(msg_client_child[ind]>='0' && msg_client_child[ind]<='9')
         {
           nr[inr]=msg_client_child[ind];
+          ind++;inr++;
         }
+        nr[inr]='\0';
         id_save=atoi(nr);
 
         std::vector<Tree_vms*>*list=parabola(id_save);

@@ -286,7 +286,7 @@ int main (int argc, char *argv[])
 /*====================================PARABOLA======================================*/
       if  (strncmp(msg_server_child,"parabola",strlen("parabola"))==0)
       {
-        printf("Opening Parabola\n");
+        //printf("Opening Parabola\n");
         int pton=1;
         std::vector<Tree_vms*>*list=getTreeList(sd_child);
         sf::RenderWindow *window=new sf::RenderWindow(sf::VideoMode(1200,800),"Parabola");
