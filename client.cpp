@@ -195,6 +195,7 @@ int main (int argc, char *argv[])
         int hon=1;
         std::vector<Tree_vms*>*list=getTreeList(sd_child);
         sf::RenderWindow *window=new sf::RenderWindow(sf::VideoMode(1200,800),"Hexagram");
+        
         window->clear();
         GraphDrawList(*window,list,1200);
         window->display();
